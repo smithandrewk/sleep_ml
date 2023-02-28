@@ -30,7 +30,13 @@ def load_psd(fileindex):
     df = df.drop('timestamp',axis=1)
     df = df[df['label']!='X']
     df = df.drop('0.0',axis=1)
+    return df
 
+def load_psd_list(list):
+    df = load_psd(list[0])
+    for i in list[1:]:
+        df = pd.concat([df,load_psd(i)])
+    df = df.reset_index(drop=True)
     return df
 
 def load_all_psd():
@@ -50,3 +56,19 @@ def leave_one_out():
         df = pd.concat([df,load_psd(i)])
     df = df.reset_index(drop=True)
     return df,df_left_out
+
+def remove_outliers_from_eeg(eeg):
+    from sklearn.impute import SimpleImputer
+    eeg = eeg.reshape(-1,1)
+    mean = np.mean(eeg)
+    std = np.std(eeg,axis=0)
+
+    lower_outliers = np.where(eeg < (mean - 5*std))[0]
+    upper_outliers = np.where(eeg > (mean + 5*std))[0]
+
+    eeg[lower_outliers] = np.nan
+    eeg[upper_outliers] = np.nan
+
+    imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+    eeg_no_outliers = imp_mean.fit_transform(eeg)
+    return eeg_no_outliers

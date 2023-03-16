@@ -3,3 +3,4 @@ figures
 figs*
 *.jpg
 models
+model.pt

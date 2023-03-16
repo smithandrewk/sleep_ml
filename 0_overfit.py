@@ -13,8 +13,7 @@ parser = argparse.ArgumentParser(description='Description of your program')
 parser.add_argument('-r','--resume', help='Description for foo argument',required=False,action='store_true',default=False)
 parser.add_argument("-e", "--epochs", type=int, default=100,
                     help="The number of games to simulate")
-parser.add_argument("-d", "--device", type=int, default=0,options=[0,1],
-                    help="The number of games to simulate")
+parser.add_argument("-d", "--device", type=int, default=0,options=[0,1],help="The number of games to simulate")
 args = parser.parse_args()
 
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")

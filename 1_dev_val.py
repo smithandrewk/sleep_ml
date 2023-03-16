@@ -1,3 +1,4 @@
+
 print("Running main.py")
 
 ## Imports
@@ -76,5 +77,7 @@ plt.plot(training_losses)
 plt.savefig('loss.jpg')
 from datetime import datetime
 current_date = str(datetime.now()).replace(' ','_')
+if not os.path.isdir('models'):
+    os.system('mkdir models')
 torch.save(model.state_dict(), f=f'models/{current_date}.pt')
 torch.save(model.state_dict(), f=f'model.pt')

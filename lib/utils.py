@@ -54,7 +54,7 @@ def load_raw_by_path(path):
                         'HD BattVoltage':'misc',
                         'On Time':'misc',
                         'Signal Strength':'misc',
-                        'Temperature':'misc'})
+                        'Temperature':'misc'},verbose=False)
     return raw
 
 def load_psd(fileindex):

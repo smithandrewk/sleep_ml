@@ -74,7 +74,7 @@ for epoch in pbar:
     pbar.set_description(f'\033[93mDev Loss: {training_loss:.4f}\033[0m')
 plt.plot(training_losses)
 plt.savefig('loss.jpg')
-from datetime.datetime import now
-
-# torch.save(model.state_dict(), f=f'{now().replace(' ','_')}.pt')
-# torch.save(model.state_dict(), f=f'model.pt')
+from datetime import datetime
+current_date = str(datetime.now()).replace(' ','_')
+torch.save(model.state_dict(), f=f'models/{current_date}.pt')
+torch.save(model.state_dict(), f=f'model.pt')

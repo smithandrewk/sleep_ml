@@ -49,14 +49,6 @@ def load_raw_by_path(path):
     raw = read_raw_edf(path,verbose=False)
     raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
     raw.set_channel_types({'EEG':'eeg','EMG':'emg'},verbose=False)
-    # raw.set_channel_types({'Activity':'misc',
-    #                     'EEG':'eeg',
-    #                     'EMG':'emg',
-    #                     'HD BattVoltage':'misc',
-    #                     'On Time':'misc',
-    #                     'Signal Strength':'misc',
-    #                     'Temperature':'misc'},verbose=False)
-
     return raw
 
 def load_psd(fileindex):

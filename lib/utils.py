@@ -59,13 +59,6 @@ def load_raw_by_path(path):
 
 def load_psd(fileindex):
     df = pd.read_csv(f'data/{fileindex}.csv')
-    for x,y in zip(df.columns[2:-2],np.linspace(0,19.5,40)):
-        df = df.rename(mapper = {x:str(y)},axis=1)
-    df = df.rename(mapper = {'EEG 2 (Mean, 10s)':'emg'},axis=1)
-    df = df.rename(mapper = {'Activity (Mean, 10s)':'activity'},axis=1)
-    df = df.drop('timestamp',axis=1)
-    # df = df[df['label']!='X']
-    # df = df.drop('0.0',axis=1)
     return df
 
 def load_psd_list(list):

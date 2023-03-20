@@ -4,3 +4,7 @@ figs*
 *.jpg
 models
 model.pt
+pt
+bkp
+train_test_80_20_not_stratified
+data.pt

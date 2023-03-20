@@ -15,18 +15,23 @@ parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', help='Whether to resume previous training',required=False,action='store_true',default=False)
 parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
+parser.add_argument("-b", "--batch", type=int, default=256,help="Batch Size")
+
 args = parser.parse_args()
+
+BATCH_SIZE = args.batch
+
 
 
 ## Load Data
-X,y = load_raw_list([21])
+X,y = load_raw_list([20])
 y = one_hot(y,num_classes=3).reshape(-1,3).float()
 X = X.flatten()[::10]
 X = X.reshape(-1,500)
 
 
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
-dataloader = DataLoader(TensorDataset(X,y), batch_size=256, shuffle=True)
+dataloader = DataLoader(TensorDataset(X,y), batch_size=BATCH_SIZE, shuffle=True)
 
 model = MLP()
 

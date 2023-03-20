@@ -1,38 +1,46 @@
-
 print("Running main.py")
 
 ## Imports
 from lib.utils import *
-from lib.models import MLP
-from torch.utils.data import TensorDataset
+from lib.models import CNN_0
+from lib.datasets import EEGDataset
 from torch.utils.data import DataLoader
+import os
 from tqdm import tqdm
 import argparse
 import os
+from torch.nn.functional import softmax
 
 ##Argparse
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', help='Whether to resume previous training',required=False,action='store_true',default=False)
 parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
+parser.add_argument("-b", "--batch", type=int, default=64,help="Batch Size")
+
 args = parser.parse_args()
 
+BATCH_SIZE = args.batch
+EPOCHS = args.epochs
+RESUME = args.resume
+
+## Model Saving
+from datetime import datetime
+current_date = str(datetime.now()).replace(' ','_')
+if not os.path.isdir('models'):
+    os.system('mkdir models')
+os.system(f'mkdir models/{current_date}')
 
 ## Load Data
-X,y = load_raw_list([20,21,22,23,24,25,26])
-X = X.flatten()[::10]
-X = X.reshape(-1,500)
-X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=.2,shuffle=True,stratify=y,random_state=0)
-y_train_one_hot = one_hot(y_train,num_classes=3).reshape(-1,3).float()
-y_test_one_hot = one_hot(y_test,num_classes=3).reshape(-1,3).float()
-train_dataloader = DataLoader(TensorDataset(X_train,y_train_one_hot), batch_size=256, shuffle=True)
-test_dataloader = DataLoader(TensorDataset(X_test,y_test_one_hot), batch_size=256, shuffle=False)
+train_dataloader = DataLoader(EEGDataset(dir='pt/train',labels='pt/y_train.pt'), batch_size=32, shuffle=True)
+test_dataloader = DataLoader(EEGDataset(dir='pt/test',labels='pt/y_test.pt'), batch_size=32, shuffle=False)
 
+## Model
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 
-model = MLP()
+model = CNN_0()
 
-if(args.resume):
+if(RESUME):
     print("Resuming previous training")
     if os.path.exists(f'./model.pt'):
         model.load_state_dict(torch.load(f='model.pt'))
@@ -53,18 +61,18 @@ training_losses = []
 testing_losses = []
 
 # Get initial loss
-total_loss = 0
-for (X,y) in train_dataloader:
-    X,y = X.to(device),y.to(device)
-    logits = model(X)
-    loss = criterion(logits,y)
-    total_loss += loss.item()
-print("initial loss",total_loss/len(train_dataloader))
+# total_loss = 0
+# for (X,y) in tqdm(train_dataloader):
+#     X,y = X.to(device),y.to(device)
+#     logits = model(X)
+#     loss = criterion(logits,y)
+#     total_loss += loss.item()
+# print("initial loss",total_loss/len(train_dataloader))
 
-pbar = tqdm(range(args.epochs))
+pbar = tqdm(range(EPOCHS))
 for epoch in pbar:
     training_loss = 0
-    for (X,y) in train_dataloader:
+    for (X,y) in tqdm(train_dataloader):
         X,y = X.to(device),y.to(device)
         logits = model(X)
         loss = criterion(logits,y)
@@ -76,7 +84,7 @@ for epoch in pbar:
     training_losses.append(training_loss)
     model.eval()
     testing_loss = 0
-    for (X,y) in test_dataloader:
+    for (X,y) in tqdm(test_dataloader):
         X,y = X.to(device), y.to(device)
         logits = model(X)
         loss = criterion(logits,y)
@@ -90,11 +98,18 @@ for epoch in pbar:
     plt.savefig('loss.jpg')
     plt.close()
 
-## Model Saving
-from datetime import datetime
-current_date = str(datetime.now()).replace(' ','_')
-if not os.path.isdir('models'):
-    os.system('mkdir models')
+plt.plot(training_losses)
+plt.plot(testing_losses)
+plt.savefig('loss.jpg')
+plt.close()
+
+test = EEGDataset(dir='pt/test',labels='pt/y_test.pt')
+y_true = [test[i][1].argmax(axis=0).item() for i in range(len(test))]
+y_pred = torch.Tensor().cuda()
+for (X,_) in test_dataloader:
+    y_pred = torch.cat([y_pred,softmax(model(X.cuda()),dim=1).argmax(axis=1)])
+y_pred = y_pred.cpu()
+cms(y_true=y_true,y_pred=y_pred)
     
 if torch.cuda.device_count() > 1:
     torch.save(model.module.state_dict(), f=f'models/{current_date}.pt')

@@ -26,7 +26,7 @@ X = X.reshape(-1,500)
 
 
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
-dataloader = DataLoader(TensorDataset(X,y), batch_size=1024, shuffle=True)
+dataloader = DataLoader(TensorDataset(X,y), batch_size=256, shuffle=True)
 
 model = MLP()
 

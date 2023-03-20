@@ -82,7 +82,8 @@ from datetime import datetime
 current_date = str(datetime.now()).replace(' ','_')
 if not os.path.isdir('models'):
     os.system('mkdir models')
-if(args.resume):
+
+if torch.cuda.device_count() > 1:
     torch.save(model.module.state_dict(), f=f'models/{current_date}.pt')
     torch.save(model.module.state_dict(), f=f'model.pt')
 else:

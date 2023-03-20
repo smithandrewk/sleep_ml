@@ -40,8 +40,8 @@ if(args.resume):
         exit(0)
 
 if torch.cuda.device_count() > 1:
-  print("Let's use", torch.cuda.device_count(), "GPUs!")
-  model = nn.DataParallel(model)
+    print("Let's use", torch.cuda.device_count(), "GPUs!")
+    model = nn.DataParallel(model)
 
 model.to(device)
 
@@ -82,5 +82,9 @@ from datetime import datetime
 current_date = str(datetime.now()).replace(' ','_')
 if not os.path.isdir('models'):
     os.system('mkdir models')
-torch.save(model.state_dict(), f=f'models/{current_date}.pt')
-torch.save(model.state_dict(), f=f'model.pt')
+if(args.resume):
+    torch.save(model.module.state_dict(), f=f'models/{current_date}.pt')
+    torch.save(model.module.state_dict(), f=f'model.pt')
+else:
+    torch.save(model.state_dict(), f=f'models/{current_date}.pt')
+    torch.save(model.state_dict(), f=f'model.pt')

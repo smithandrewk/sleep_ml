@@ -20,7 +20,6 @@ class CNN_0(nn.Module):
         self.c2 = nn.Conv1d(16, 8, kernel_size=20, stride=10)
         self.fc1 = nn.Linear(80, 3)
         self.fc1.bias = torch.nn.Parameter(data=torch.Tensor([.1,1,1]))
-        print(self.fc1.bias)
 
     def forward(self,x):
         x = self.c1(x)
@@ -30,7 +29,6 @@ class CNN_0(nn.Module):
         x = nn.functional.relu(x)
         x = nn.functional.max_pool1d(x, kernel_size=2)
         x = nn.Flatten()(x)
-        # x = x.view(-1, 56)
         x = self.fc1(x)
         
         return x

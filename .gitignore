@@ -1,4 +1,4 @@
-data
+data/*
 figures
 figs*
 *.jpg
@@ -8,3 +8,4 @@ pt
 bkp
 train_test_80_20_not_stratified
 data.pt
+project

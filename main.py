@@ -97,14 +97,9 @@ for epoch in pbar:
     testing_losses.append(testing_loss)
     pbar.set_description(f'\033[94mDev Loss: {training_loss:.4f}\033[93m Val Loss: {testing_loss:.4f}\033[0m')
 
-    # plt.plot(training_losses[-400:])
-    # plt.plot(testing_losses[-400:])
-    # plt.savefig('loss.jpg')
-    # plt.close()
-
 plt.plot(training_losses)
 plt.plot(testing_losses)
-plt.savefig('loss.jpg')
+plt.savefig(f'project/{current_date}/loss.jpg')
 plt.close()
 
 # test confusion matrices

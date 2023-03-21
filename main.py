@@ -76,7 +76,7 @@ testing_losses = []
 pbar = tqdm(range(config['EPOCHS']))
 for epoch in pbar:
     training_loss = 0
-    for (X,y) in tqdm(train_dataloader):
+    for (X,y) in train_dataloader:
         X,y = X.to(device),y.to(device)
         logits = model(X)
         loss = criterion(logits,y)

@@ -11,7 +11,7 @@ class EEGDataset(Dataset):
         self.dir = dir
 
     def __len__(self):
-        return int(len(self.labels)/10)
+        return len(self.labels)
 
     def __getitem__(self, idx):
         path = os.path.join(self.dir, str(idx)+".pt")

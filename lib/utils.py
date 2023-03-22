@@ -14,7 +14,7 @@ from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import balanced_accuracy_score,accuracy_score
 
-def cms(y_true,y_pred,current_date):
+def cms(y_true,y_pred,current_date=None):
     fig,axes = plt.subplots(1,3,sharey=True,figsize=(10,5))
     sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,ax=axes[0],cbar=False,fmt='.2f')
     sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='pred'),annot=True,ax=axes[1],cbar=False,fmt='.2f')
@@ -27,9 +27,12 @@ def cms(y_true,y_pred,current_date):
     axes[2].set_xticklabels(['P','S','W'])
     axes[0].set_yticklabels(['P','S','W'])
     plt.suptitle(f'macro-recall : {balanced_accuracy_score(y_true=y_true,y_pred=y_pred)}')
-    plt.savefig(f'project/{current_date}/cm.jpg',dpi=200,bbox_inches='tight')
+    if current_date is None:
+        plt.savefig(f'cm.jpg',dpi=200,bbox_inches='tight')
+    else:
+        plt.savefig(f'project/{current_date}/cm.jpg',dpi=200,bbox_inches='tight')
 def load_raw(filename):
-    filepath = f'data/{filename}.edf'
+    filepath = f'data/raw/{filename}.edf'
     return load_raw_by_path(filepath)
 def load_raw_list(list):
     ret = pd.DataFrame()
@@ -68,7 +71,7 @@ def load_raw_by_path(path):
     return raw
 
 def load_psd(fileindex):
-    df = pd.read_csv(f'data/{fileindex}.csv')
+    df = pd.read_csv(f'data/raw/{fileindex}.csv')
     return df
 
 def load_psd_list(list):

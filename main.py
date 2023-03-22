@@ -40,8 +40,8 @@ if not os.path.isdir(f'project'):
 if not os.path.isdir(f'project/{current_date}'):
     os.system(f'mkdir project/{current_date}')
 
-test = EEGDataset(dir='data/pt/test',labels='data/pt/y_test.pt')
-train_dataloader = DataLoader(EEGDataset(dir='data/pt/train',labels='data/pt/y_train.pt'), batch_size=32, shuffle=True)
+test = EEGDataset(dir='data/pt_bal/test',labels='data/pt_bal/y_test.pt')
+train_dataloader = DataLoader(EEGDataset(dir='data/pt_bal/train',labels='data/pt_bal/y_train.pt'), batch_size=32, shuffle=True)
 test_dataloader = DataLoader(test, batch_size=32, shuffle=False)
 
 model = CNN_0()
@@ -76,7 +76,7 @@ testing_losses = []
 pbar = tqdm(range(config['EPOCHS']))
 for epoch in pbar:
     training_loss = 0
-    for (X,y) in train_dataloader:
+    for (X,y) in tqdm(train_dataloader):
         X,y = X.to(device),y.to(device)
         logits = model(X)
         loss = criterion(logits,y)

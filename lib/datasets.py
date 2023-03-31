@@ -12,7 +12,7 @@ class EEGDataset(Dataset):
 
     def __getitem__(self, idx):
         path = join(self.dir, str(idx)+".pt")
-        X = load(path).reshape(-1,5000)
+        X = load(path).reshape(-1,5000)[:,::10]
         y = self.labels[idx]
 
         return (X,y)

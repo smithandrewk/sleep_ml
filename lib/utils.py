@@ -13,7 +13,14 @@ from torch.nn.functional import relu,one_hot
 from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import balanced_accuracy_score,accuracy_score
-
+def training_loss(train_dataloader,model,criterion,device):
+    training_loss = 0
+    for (X,y) in tqdm(train_dataloader):
+        X,y = X.to(device), y.to(device)
+        logits = model(X)
+        loss = criterion(logits,y)
+        training_loss += loss.item()
+    return training_loss/len(train_dataloader)
 def cms(y_true,y_pred,current_date=None):
     fig,axes = plt.subplots(1,3,sharey=True,figsize=(10,5))
     sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,ax=axes[0],cbar=False,fmt='.2f')

@@ -3,16 +3,13 @@ author: Andrew Smith
 date: Mar 21
 description:
 """
-
-
 import argparse
 import os
-import requests
 from datetime import datetime
 import json
 
 from lib.utils import *
-from lib.models import CNN_0
+from lib.models import SimpleCNN as MODEL
 from lib.datasets import EEGDataset
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
@@ -40,11 +37,10 @@ if not os.path.isdir(f'project'):
 if not os.path.isdir(f'project/{current_date}'):
     os.system(f'mkdir project/{current_date}')
 
-test = EEGDataset(dir='data/pt_bal/test',labels='data/pt_bal/y_test.pt')
-train_dataloader = DataLoader(EEGDataset(dir='data/pt_bal/train',labels='data/pt_bal/y_train.pt'), batch_size=32, shuffle=True)
-test_dataloader = DataLoader(test, batch_size=32, shuffle=False)
+train_dataloader = DataLoader(EEGDataset(dir='data/pt_bal/train',labels='data/pt_bal/y_train.pt'), batch_size=args.batch, shuffle=True)
+test_dataloader = DataLoader(EEGDataset(dir='data/pt_bal/test',labels='data/pt_bal/y_test.pt'), batch_size=args.batch, shuffle=False)
 
-model = CNN_0()
+model = MODEL()
 
 if(config['RESUME']):
     print("Resuming previous training")
@@ -96,16 +92,16 @@ for epoch in pbar:
     testing_loss = testing_loss/len(test_dataloader)
     testing_losses.append(testing_loss)
     pbar.set_description(f'\033[94mDev Loss: {training_loss:.4f}\033[93m Val Loss: {testing_loss:.4f}\033[0m')
-
-plt.plot(training_losses)
-plt.plot(testing_losses)
-plt.savefig(f'project/{current_date}/loss.jpg')
-plt.close()
+    plt.plot(training_losses)
+    plt.plot(testing_losses)
+    plt.savefig(f'project/{current_date}/loss.jpg')
+    plt.close()
 
 # test confusion matrices
-y_true = [test[i][1].argmax(axis=0).item() for i in range(len(test))]
+y_true = torch.Tensor()
 y_pred = torch.Tensor().cuda()
-for (X,_) in test_dataloader:
+for (X,y) in test_dataloader:
+    y_true = torch.cat([y_true,y.argmax(axis=1)])
     y_pred = torch.cat([y_pred,softmax(model(X.cuda()),dim=1).argmax(axis=1)])
 y_pred = y_pred.cpu()
 cms(y_true=y_true,y_pred=y_pred,current_date=current_date)

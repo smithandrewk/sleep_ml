@@ -69,7 +69,7 @@ def load_raw_list(list):
     X = ret.to_numpy()
 
     X = torch.from_numpy(X).float()
-    y = torch.from_numpy(y).reshape(-1,1).long()
+    y = one_hot(torch.from_numpy(y).long()).float()
     return (X,y)
 def load_raw_by_path(path):
     raw = read_raw_edf(path,verbose=False)

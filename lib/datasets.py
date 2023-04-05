@@ -26,6 +26,6 @@ class WindowedEEGDataset(Dataset):
 
     def __getitem__(self, idx):
         id = self.ids[idx]
-        X,y = torch.load(f'windowed/{id}.pt')
+        X,y = torch.load(f'{self.dir}/{id}.pt')
 
         return (X,y)

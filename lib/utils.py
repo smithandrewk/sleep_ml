@@ -39,7 +39,7 @@ def cms(y_true,y_pred,current_date=None):
     else:
         plt.savefig(f'project/{current_date}/cm.jpg',dpi=200,bbox_inches='tight')
 def load_raw(filename):
-    filepath = f'data/raw/{filename}.edf'
+    filepath = f'data/alpha_sleep/{filename}.edf'
     return load_raw_by_path(filepath)
 def load_raw_list(list):
     ret = pd.DataFrame()
@@ -78,7 +78,7 @@ def load_raw_by_path(path):
     return raw
 
 def load_psd(fileindex):
-    df = pd.read_csv(f'data/raw/{fileindex}.csv')
+    df = pd.read_csv(f'data/alpha_sleep/{fileindex}.csv')
     return df
 
 def load_psd_list(list):

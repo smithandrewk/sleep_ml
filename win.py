@@ -3,6 +3,7 @@ import pandas as pd
 from tqdm import tqdm
 import torch
 import os
+import matplotlib.pyplot as plt
 
 from torch import nn
 from torch.nn.functional import relu,one_hot
@@ -11,11 +12,12 @@ from lib.datasets import WindowedEEGDataset
 from torch.utils.data import TensorDataset,DataLoader
 
 device = 'cuda'
+data_dir = 'windowsize_3'
 
-train_idx,dev_idx = train_test_split(range(len(os.listdir('windowed'))),test_size=.2,shuffle=True,random_state=0)
+train_idx,dev_idx = train_test_split(range(len(os.listdir(data_dir))),test_size=.2,shuffle=True,random_state=0)
 
-trainloader = DataLoader(WindowedEEGDataset(f'windowed',train_idx),batch_size=128,shuffle=True)
-devloader = DataLoader(WindowedEEGDataset(f'windowed',dev_idx),batch_size=128,shuffle=True)
+trainloader = DataLoader(WindowedEEGDataset(data_dir,train_idx),batch_size=128,shuffle=True)
+devloader = DataLoader(WindowedEEGDataset(data_dir,dev_idx),batch_size=128,shuffle=True)
 
 class MLP(nn.Module):
     def __init__(self) -> None:
@@ -28,7 +30,7 @@ class MLP(nn.Module):
         x = self.fc2(x)
         return x
     
-model = MLP().to(device=device)
+model = torch.load('model_1100.pt')
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(),lr=3e-4)
 
@@ -58,11 +60,11 @@ for i in tqdm(range(100)):
         optimizer.step()
         loss_dev_total += loss.item()
     loss_dev.append(loss_dev_total/len(devloader))
-    
-import matplotlib.pyplot as plt
-plt.plot(loss_tr)
-plt.plot(loss_dev)
-plt.savefig('loss.jpg')
-plt.close()
+    plt.plot(loss_tr)
+    plt.plot(loss_dev)
+    plt.savefig('loss.jpg')
+    plt.close()
+    print(f'Epoch {i} Train: {loss_tr_total/len(trainloader)} Dev: {loss_dev_total/len(devloader)}')
 
-torch.save(model,'model.pt')
+
+torch.save(model,'model_1200.pt')

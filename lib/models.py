@@ -1,27 +1,46 @@
 from torch import nn
 from torch.nn.functional import relu
-
-class SimpleCNN(nn.Module):
+## w1 model
+class MLP(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.c1 = nn.Conv1d(1, 10, kernel_size=100, stride=1)
-        self.fc1 = nn.Linear(2000, 256)
-        self.do1 = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(256, 3)
-
-
+        self.fc1 = nn.Linear(5000,10)
+        self.do1 = nn.Dropout(p=0.9)
+        self.fc2 = nn.Linear(10,3)
     def forward(self,x):
-        x = self.c1(x)
-        x = nn.functional.relu(x)
-        x = nn.functional.max_pool1d(x, kernel_size=2)
-        x = x.view(x.size(0),-1)
         x = self.fc1(x)
-        x = nn.functional.relu(x)
+        x = relu(x)
         x = self.do1(x)
         x = self.fc2(x)
+        return x
+class CNN(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.c1 = nn.Conv1d(1, 10, kernel_size=10, stride=1,bias=False)
+        self.c2 = nn.Conv1d(10, 10, kernel_size=8, stride=1,bias=False)
+        self.c3 = nn.Conv1d(10, 10, kernel_size=5, stride=1,bias=False)
+        self.fc1 = nn.Linear(6200,3)
+        self.do1 = nn.Dropout(p=0.9)
+
+    def forward(self,x):
+        x = x.view(-1,1,5000)
+
+        x = self.c1(x)
+        x = nn.functional.relu(x)
+        x = nn.functional.max_pool1d(x,kernel_size=2)
+
+        x = self.c2(x)
+        x = nn.functional.relu(x)
+        x = nn.functional.max_pool1d(x,kernel_size=2)
+
+        x = self.c3(x)
+        x = nn.functional.relu(x)
+        x = nn.functional.max_pool1d(x,kernel_size=2)
+
+        x = self.fc1(x.view(-1,6200))
+        x = self.do1(x)
 
         return x
-
 class ResNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -37,10 +56,11 @@ class ResNet(nn.Module):
         self.bn4 = nn.BatchNorm1d(n_feature_maps,momentum=.01)
 
         ## final
-        self.gap = nn.AvgPool1d(kernel_size=500)
+        self.gap = nn.AvgPool1d(kernel_size=5000)
         self.fc1 = nn.Linear(in_features=n_feature_maps,out_features=3)
 
     def forward(self,x):
+        x = x.view(-1,1,5000)
         identity = x
         x = self.c1(x)
         x = self.bn1(x)
@@ -59,4 +79,5 @@ class ResNet(nn.Module):
         ## final
         x = self.gap(x)
         x = self.fc1(x.squeeze())
+        
         return x

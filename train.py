@@ -29,6 +29,7 @@ parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of trai
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
 parser.add_argument("-b", "--batch", type=int, default=64,help="Batch Size")
+parser.add_argument("-l", "--lr", type=float, default=3e-4,help="Learning Rate")
 args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
@@ -71,7 +72,7 @@ config['END_EPOCH'] = config['START_EPOCH'] + config['EPOCHS'] - 1
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(),lr=3e-4)
+optimizer = torch.optim.Adam(model.parameters(),lr=args.lr)
 
 loss_tr = []
 loss_dev = []

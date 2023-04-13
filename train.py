@@ -121,10 +121,10 @@ for epoch in pbar:
 
 # test confusion matrices
 y_true = torch.Tensor()
-y_pred = torch.Tensor().cuda()
+y_pred = torch.Tensor().to(device)
 for (X,y) in devloader:
     y_true = torch.cat([y_true,y.argmax(axis=1)])
-    y_pred = torch.cat([y_pred,softmax(model(X.cuda()),dim=1).argmax(axis=1)])
+    y_pred = torch.cat([y_pred,softmax(model(X.to(device)),dim=1).argmax(axis=1)])
 y_pred = y_pred.cpu()
 
 cms(y_true=y_true,y_pred=y_pred,path=f'{project_dir}/{current_date}',loss=loss_dev[-1])

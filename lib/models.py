@@ -45,7 +45,7 @@ class ResNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         ## block 1
-        n_feature_maps = 64
+        n_feature_maps = 32
         self.c1 = nn.Conv1d(1,n_feature_maps,kernel_size=8,padding='same',bias=False)
         self.bn1 = nn.BatchNorm1d(n_feature_maps,momentum=.01)
 
@@ -61,6 +61,7 @@ class ResNet(nn.Module):
 
     def forward(self,x):
         x = x.view(-1,1,5000)
+        
         identity = x
         x = self.c1(x)
         x = self.bn1(x)

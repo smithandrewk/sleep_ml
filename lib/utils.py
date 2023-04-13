@@ -21,7 +21,7 @@ def training_loss(train_dataloader,model,criterion,device):
         loss = criterion(logits,y)
         training_loss += loss.item()
     return training_loss/len(train_dataloader)
-def cms(y_true,y_pred,current_date=None):
+def cms(y_true,y_pred,path='.',loss=0):
     fig,axes = plt.subplots(1,3,sharey=True,figsize=(10,5))
     sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,ax=axes[0],cbar=False,fmt='.2f')
     sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='pred'),annot=True,ax=axes[1],cbar=False,fmt='.2f')
@@ -33,11 +33,8 @@ def cms(y_true,y_pred,current_date=None):
     axes[1].set_xticklabels(['P','S','W'])
     axes[2].set_xticklabels(['P','S','W'])
     axes[0].set_yticklabels(['P','S','W'])
-    plt.suptitle(f'macro-recall : {balanced_accuracy_score(y_true=y_true,y_pred=y_pred)}')
-    if current_date is None:
-        plt.savefig(f'cm.jpg',dpi=200,bbox_inches='tight')
-    else:
-        plt.savefig(f'project/{current_date}/cm.jpg',dpi=200,bbox_inches='tight')
+    plt.suptitle(f'macro-recall : {balanced_accuracy_score(y_true=y_true,y_pred=y_pred)} loss : {loss}')
+    plt.savefig(f'{path}/cm.jpg',dpi=200,bbox_inches='tight')
 def load_raw(filename):
     filepath = f'data/alpha_sleep/{filename}.edf'
     return load_raw_by_path(filepath)

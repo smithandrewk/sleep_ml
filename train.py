@@ -14,25 +14,25 @@ from datetime import datetime
 import json
 
 from lib.utils import *
-from lib.models import CNN as MODEL
-from torch.utils.data import DataLoader
+from lib.models import ResNet as MODEL
 from torch import nn
-from sklearn.model_selection import train_test_split
 from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
 
-data_dir = 'w1_small_balanced_normalized'
+data_dir = 'data/w1_balanced_normalized'
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
+parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
 parser.add_argument("-b", "--batch", type=int, default=64,help="Batch Size")
 args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
+project_dir = args.project
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
     'BATCH_SIZE':args.batch,
@@ -41,22 +41,17 @@ config = {
     'START_TIME':current_date
 }
 
-if not os.path.isdir(f'project'):
-    os.system(f'mkdir project')
-if not os.path.isdir(f'project/{current_date}'):
-    os.system(f'mkdir project/{current_date}')
-project_dir = 'project'
-
-# train_idx,dev_idx = train_test_split(range(len(os.listdir(data_dir))),test_size=.2,shuffle=True,random_state=0)
-
-# trainloader = DataLoader(WindowedEEGDataset(data_dir,train_idx),batch_size=128,shuffle=True)
-# devloader = DataLoader(WindowedEEGDataset(data_dir,dev_idx),batch_size=128,shuffle=True)
+if not os.path.isdir(project_dir):
+    os.system(f'mkdir {project_dir}')
+if not os.path.isdir(f'{project_dir}/{current_date}'):
+    os.system(f'mkdir {project_dir}/{current_date}')
 
 trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=64,shuffle=True)
 devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/test/',labels=f'{data_dir}/y_test.pt'),batch_size=64,shuffle=True)
 
 model = MODEL()
-
+params = sum([p.flatten().size()[0] for p in list(model.parameters())])
+print("Params: ",params)
 if(config['RESUME']):
     print("Resuming previous training")
     if os.path.exists(f'project/model.pt'):
@@ -135,18 +130,19 @@ for (X,y) in devloader:
     y_true = torch.cat([y_true,y.argmax(axis=1)])
     y_pred = torch.cat([y_pred,softmax(model(X.cuda()),dim=1).argmax(axis=1)])
 y_pred = y_pred.cpu()
-cms(y_true=y_true,y_pred=y_pred,current_date=current_date)
+
+cms(y_true=y_true,y_pred=y_pred,path=f'{project_dir}/{current_date}',loss=loss_dev[-1])
 
 # save model
 if torch.cuda.device_count() > 1:
-    torch.save(model.module.state_dict(), f=f'project/{current_date}/model.pt')
-    torch.save(model.module.state_dict(), f=f'project/model.pt')
+    torch.save(model.module.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
+    torch.save(model.module.state_dict(), f=f'{project_dir}/model.pt')
 else:
-    torch.save(model.state_dict(), f=f'project/{current_date}/model.pt')
-    torch.save(model.state_dict(), f=f'project/model.pt')
+    torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
+    torch.save(model.state_dict(), f=f'{project_dir}/model.pt')
 
 # save config
-with open('project/config.json', 'w') as f:
+with open(f'{project_dir}/config.json', 'w') as f:
      f.write(json.dumps(config))
-with open(f'project/{current_date}/config.json', 'w') as f:
+with open(f'{project_dir}/{current_date}/config.json', 'w') as f:
      f.write(json.dumps(config))

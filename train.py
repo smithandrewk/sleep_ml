@@ -46,31 +46,27 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=64,shuffle=True)
-devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/test/',labels=f'{data_dir}/y_test.pt'),batch_size=64,shuffle=True)
+trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=args.batch,shuffle=True)
+devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/test/',labels=f'{data_dir}/y_test.pt'),batch_size=args.batch,shuffle=True)
 
 model = MODEL()
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
 print("Params: ",params)
 if(config['RESUME']):
     print("Resuming previous training")
-    if os.path.exists(f'project/model.pt'):
-        model.load_state_dict(torch.load(f='project/model.pt'))
+    if os.path.exists(f'{project_dir}/model.pt'):
+        model.load_state_dict(torch.load(f=f'{project_dir}/model.pt'))
     else:
         print("Model file does not exist.")
         print("Exiting because resume flag was given and model does not exist. Either remove resume flag or move model to directory.")
         exit(0)
-    with open(f'project/config.json','r') as f:
+    with open(f'{project_dir}/config.json','r') as f:
         previous_config = json.load(f)
     config['START_EPOCH'] = previous_config['END_EPOCH'] + 1
 else:
     config['START_EPOCH'] = 0
 
 config['END_EPOCH'] = config['START_EPOCH'] + config['EPOCHS'] - 1
-
-if torch.cuda.device_count() > 1:
-    print("Let's use", torch.cuda.device_count(), "GPUs!")
-    model = nn.DataParallel(model)
 
 model.to(device)
 
@@ -133,16 +129,13 @@ y_pred = y_pred.cpu()
 
 cms(y_true=y_true,y_pred=y_pred,path=f'{project_dir}/{current_date}',loss=loss_dev[-1])
 
-# save model
-if torch.cuda.device_count() > 1:
-    torch.save(model.module.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
-    torch.save(model.module.state_dict(), f=f'{project_dir}/model.pt')
-else:
-    torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
-    torch.save(model.state_dict(), f=f'{project_dir}/model.pt')
+torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
+torch.save(model.state_dict(), f=f'{project_dir}/model.pt')
 
 # save config
 with open(f'{project_dir}/config.json', 'w') as f:
      f.write(json.dumps(config))
 with open(f'{project_dir}/{current_date}/config.json', 'w') as f:
      f.write(json.dumps(config))
+
+# TODO: email on finish

@@ -152,3 +152,31 @@ def test_confusion_matrix(X_test,y_test,clf,title):
     plt.ylabel('True Label')
     plt.title(f'{title}',fontweight='heavy')
     plt.savefig(f'figures/{title}_test.jpg',dpi=200,bbox_inches='tight')
+
+def get_bout_statistics_for_predictions(pred):
+    bout_lengths = {
+    'P':[],
+    'S':[],
+    'W':[],
+    'X':[],
+    'A':[]
+    }
+    transition_matrix = pd.DataFrame(np.zeros((5,5)),columns=['P','S','W','X','A'],index=['P','S','W','X','A'])
+
+    current_state = 'A'
+    current_length = 0
+    for epoch in pred:
+        transition_matrix.loc[current_state,epoch] += 1
+        if(epoch != current_state):
+            bout_lengths[current_state].append(current_length)
+            current_state = epoch
+            current_length = 0
+        current_length += 1
+    bout_lengths[current_state].append(current_length)
+    bout_lengths.pop('X')
+    bout_lengths.pop('A')
+    total = {key:sum(bout_lengths[key])*10/60 for key in bout_lengths}
+    average = {key:np.mean(bout_lengths[key])*10 for key in bout_lengths}
+    counts = {key:len(bout_lengths[key]) for key in bout_lengths}
+    
+    return pd.DataFrame([pd.Series(total,name='total'),pd.Series(average,name='average'),pd.Series(counts,name='counts')])

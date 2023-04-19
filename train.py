@@ -14,13 +14,13 @@ from datetime import datetime
 import json
 
 from lib.utils import *
-from lib.models import ResNet as MODEL
+from lib.models import CNNLSTM as MODEL
 from torch import nn
 from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
 
-data_dir = 'data/w1_balanced_normalized'
+data_dir = 'w3_small_balanced_normalized'
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')

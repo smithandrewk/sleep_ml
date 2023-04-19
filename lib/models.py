@@ -42,47 +42,7 @@ class CNN(nn.Module):
         x = self.do1(x)
 
         return x
-# class ResNet(nn.Module):
-#     def __init__(self) -> None:
-#         super().__init__()
-#         ## block 1
-#         n_feature_maps = 32
-#         self.c1 = nn.Conv1d(1,n_feature_maps,kernel_size=8,padding='same',bias=False)
-#         self.bn1 = nn.BatchNorm1d(n_feature_maps,momentum=.01)
 
-#         self.c2 = nn.Conv1d(n_feature_maps,n_feature_maps,kernel_size=5,padding='same',bias=False)
-#         self.bn2 = nn.BatchNorm1d(n_feature_maps,momentum=.01)
-
-#         self.c4 = nn.Conv1d(1,n_feature_maps,1,padding='same',bias=False)
-#         self.bn4 = nn.BatchNorm1d(n_feature_maps,momentum=.01)
-
-#         ## final
-#         self.gap = nn.AvgPool1d(kernel_size=5000)
-#         self.fc1 = nn.Linear(in_features=n_feature_maps,out_features=3)
-
-#     def forward(self,x):
-#         x = x.view(-1,1,5000)
-        
-#         identity = x
-#         x = self.c1(x)
-#         x = self.bn1(x)
-#         x = relu(x)
-
-#         x = self.c2(x)
-#         x = self.bn2(x)
-#         x = relu(x)
-
-#         identity = self.c4(identity)
-#         identity = self.bn4(identity)
-
-#         x = x+identity
-#         x = relu(x)
-        
-#         ## final
-#         x = self.gap(x)
-#         x = self.fc1(x.squeeze())
-        
-#         return x
 class ResNet(nn.Module):
     def __init__(self) -> None:
         super().__init__()
@@ -137,8 +97,25 @@ class CNNLSTM(nn.Module):
             x_i = self.resnet(x_2d[:,t,:,:])
             x_i = x_i.view(-1,3)
             out,_ = self.lstm(x_i)
-
-            # x = torch.cat([x,x_i.unsqueeze(0)])
         x = self.fc1(out)        
-        # return x.view(-1,3,3)
+        return x
+class CNNBiLSTM(nn.Module):
+    def __init__(self,device='cuda') -> None:
+        super().__init__()
+        self.resnet = ResNet().to(device)
+        self.lstm_forward = nn.LSTM(3,64)
+        self.lstm_backward = nn.LSTM(3,64)
+        self.fc1 = nn.Linear(128,3)
+    def forward(self,x_2d):
+        x_2d = x_2d.view(-1,5,1,5000)
+        for t in range(3):
+            x_i = self.resnet(x_2d[:,t,:,:])
+            x_i = x_i.view(-1,3)
+            f,_ = self.lstm_forward(x_i)
+        for t in range(3):
+            x_i = self.resnet(x_2d[:,-t,:,:])
+            x_i = x_i.view(-1,3)
+            b,_ = self.lstm_forward(x_i)
+        x = torch.cat([f,b],axis=1)
+        x = self.fc1(x)        
         return x

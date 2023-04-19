@@ -19,7 +19,7 @@ from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
 
-data_dir = 'w3_small_balanced_normalized'
+data_dir = 'data/w9_bilstm'
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -29,10 +29,12 @@ parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to s
 parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
 parser.add_argument("-b", "--batch", type=int, default=64,help="Batch Size")
 parser.add_argument("-l", "--lr", type=float, default=3e-4,help="Learning Rate")
+parser.add_argument("-o", "--dropout", type=float, default=.2,help="Dropout")
+parser.add_argument("-i", "--hidden", type=int, default=32,help="Hidden Layer Neurons")
 args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
-project_dir = args.project
+project_dir = f'{args.batch}_{args.lr}'
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
     'BATCH_SIZE':args.batch,

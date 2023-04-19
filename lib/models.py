@@ -107,15 +107,15 @@ class CNNBiLSTM(nn.Module):
         self.lstm_backward = nn.LSTM(3,64)
         self.fc1 = nn.Linear(128,3)
     def forward(self,x_2d):
-        x_2d = x_2d.view(-1,5,1,5000)
-        for t in range(3):
+        x_2d = x_2d.view(-1,9,1,5000)
+        for t in range(5):
             x_i = self.resnet(x_2d[:,t,:,:])
             x_i = x_i.view(-1,3)
             f,_ = self.lstm_forward(x_i)
-        for t in range(3):
+        for t in range(5):
             x_i = self.resnet(x_2d[:,-t,:,:])
             x_i = x_i.view(-1,3)
-            b,_ = self.lstm_forward(x_i)
+            b,_ = self.lstm_backward(x_i)
         x = torch.cat([f,b],axis=1)
         x = self.fc1(x)        
         return x

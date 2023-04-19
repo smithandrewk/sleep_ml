@@ -3,7 +3,6 @@ author: Andrew Smith
 date: Mar 21
 description:
 """
-import pandas as pd
 from tqdm import tqdm
 import torch
 import os
@@ -14,7 +13,7 @@ from datetime import datetime
 import json
 
 from lib.utils import *
-from lib.models import CNNLSTM as MODEL
+from lib.models import CNNBiLSTM as MODEL
 from torch import nn
 from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader

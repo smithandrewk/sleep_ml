@@ -103,9 +103,10 @@ class CNNBiLSTM(nn.Module):
     def __init__(self,device='cuda') -> None:
         super().__init__()
         self.resnet = ResNet().to(device)
-        self.lstm_forward = nn.LSTM(3,64)
-        self.lstm_backward = nn.LSTM(3,64)
-        self.fc1 = nn.Linear(128,3)
+        self.lstm_forward = nn.LSTM(3,128)
+        self.lstm_backward = nn.LSTM(3,128)
+        self.do1 = nn.Dropout(p=.2)
+        self.fc1 = nn.Linear(256,3)
     def forward(self,x_2d):
         x_2d = x_2d.view(-1,9,1,5000)
         for t in range(5):
@@ -117,5 +118,6 @@ class CNNBiLSTM(nn.Module):
             x_i = x_i.view(-1,3)
             b,_ = self.lstm_backward(x_i)
         x = torch.cat([f,b],axis=1)
+        x = self.do1(x)
         x = self.fc1(x)        
         return x

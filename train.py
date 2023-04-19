@@ -19,7 +19,7 @@ from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
 
-data_dir = 'data/w9_bilstm'
+data_dir = 'w9_bilstm_small'
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -35,6 +35,7 @@ args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = f'{args.batch}_{args.lr}'
+
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
     'BATCH_SIZE':args.batch,

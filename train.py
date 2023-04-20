@@ -13,13 +13,13 @@ from datetime import datetime
 import json
 
 from lib.utils import *
-from lib.models import CNNBiLSTM as MODEL
+from lib.models import ResNet as MODEL
 from torch import nn
 from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
 
-data_dir = 'w9_bilstm_small'
+data_dir = 'data/w1_balanced_normalized'
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -34,14 +34,15 @@ parser.add_argument("-i", "--hidden", type=int, default=32,help="Hidden Layer Ne
 args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
-project_dir = f'{args.batch}_{args.lr}'
+project_dir = args.project
 
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
     'BATCH_SIZE':args.batch,
     'EPOCHS':args.epochs,
     'RESUME':args.resume,
-    'START_TIME':current_date
+    'START_TIME':current_date,
+    'LEARNING_RATE':args.lr
 }
 
 if not os.path.isdir(project_dir):

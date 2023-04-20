@@ -42,28 +42,22 @@ class CNN(nn.Module):
         x = self.do1(x)
 
         return x
-
-class ResNet(nn.Module):
-    def __init__(self) -> None:
+class ResidualBlock(nn.Module):
+    def __init__(self,in_feature_maps,out_feature_maps) -> None:
         super().__init__()
-        ## block 1
-        n_feature_maps = 64
-        self.c1 = nn.Conv1d(1,n_feature_maps,kernel_size=8,padding='same',bias=False)
-        self.bn1 = nn.LayerNorm((n_feature_maps,5000),elementwise_affine=False)
+        self.c1 = nn.Conv1d(in_feature_maps,out_feature_maps,kernel_size=8,padding='same',bias=False)
+        self.bn1 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
 
-        self.c2 = nn.Conv1d(n_feature_maps,n_feature_maps,kernel_size=5,padding='same',bias=False)
-        self.bn2 = nn.LayerNorm((n_feature_maps,5000),elementwise_affine=False)
+        self.c2 = nn.Conv1d(out_feature_maps,out_feature_maps,kernel_size=5,padding='same',bias=False)
+        self.bn2 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
 
-        self.c4 = nn.Conv1d(1,n_feature_maps,1,padding='same',bias=False)
-        self.bn4 = nn.LayerNorm((n_feature_maps,5000),elementwise_affine=False)
+        self.c3 = nn.Conv1d(out_feature_maps,out_feature_maps,kernel_size=3,padding='same',bias=False)
+        self.bn3 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
 
-        ## final
-        self.gap = nn.AvgPool1d(kernel_size=5000)
-        self.fc1 = nn.Linear(in_features=n_feature_maps,out_features=3)
+        self.c4 = nn.Conv1d(in_feature_maps,out_feature_maps,1,padding='same',bias=False)
+        self.bn4 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
 
     def forward(self,x):
-        x = x.view(-1,1,5000)
-        
         identity = x
         x = self.c1(x)
         x = self.bn1(x)
@@ -73,16 +67,34 @@ class ResNet(nn.Module):
         x = self.bn2(x)
         x = relu(x)
 
+        x = self.c3(x)
+        x = self.bn3(x)
+        x = relu(x)
+
         identity = self.c4(identity)
         identity = self.bn4(identity)
 
         x = x+identity
         x = relu(x)
         
-        ## final
+        return x
+
+class ResNet(nn.Module):
+    def __init__(self,device='cuda') -> None:
+        super().__init__()
+        self.block1 = ResidualBlock(1,64).to(device)
+        self.block2 = ResidualBlock(64,128).to(device)
+        self.block3 = ResidualBlock(128,128).to(device)
+
+        self.gap = nn.AvgPool1d(kernel_size=5000)
+        self.fc1 = nn.Linear(in_features=128,out_features=3)
+    def forward(self,x):
+        x = x.view(-1,1,5000)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
         x = self.gap(x)
         x = self.fc1(x.squeeze())
-        
         return x
 class CNNLSTM(nn.Module):
     def __init__(self) -> None:
@@ -121,3 +133,5 @@ class CNNBiLSTM(nn.Module):
         x = self.do1(x)
         x = self.fc1(x)        
         return x
+
+    

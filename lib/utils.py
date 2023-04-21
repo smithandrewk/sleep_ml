@@ -36,7 +36,7 @@ def cms(y_true,y_pred,path='.',loss=0):
     plt.suptitle(f'macro-recall : {balanced_accuracy_score(y_true=y_true,y_pred=y_pred)} loss : {loss}')
     plt.savefig(f'{path}/cm.jpg',dpi=200,bbox_inches='tight')
 def load_raw(filename):
-    filepath = f'data/alpha_sleep/{filename}.edf'
+    filepath = f'../data/alpha_sleep/{filename}.edf'
     return load_raw_by_path(filepath)
 def load_raw_list(list):
     ret = pd.DataFrame()
@@ -75,7 +75,7 @@ def load_raw_by_path(path):
     return raw
 
 def load_psd(fileindex):
-    df = pd.read_csv(f'data/alpha_sleep/{fileindex}.csv')
+    df = pd.read_csv(f'../data/alpha_sleep/{fileindex}.csv')
     return df
 
 def load_psd_list(list):
@@ -180,3 +180,28 @@ def get_bout_statistics_for_predictions(pred):
     counts = {key:len(bout_lengths[key]) for key in bout_lengths}
     
     return pd.DataFrame([pd.Series(total,name='total'),pd.Series(average,name='average'),pd.Series(counts,name='counts')])
+def test_evaluation(dataloader,model,criterion,device='cuda'):
+    y_true = torch.Tensor()
+    y_pred = torch.Tensor().to(device)
+    model_was_training = False
+    if(model.training):
+        # note that this changes the state of the model outside the scope of this function
+        model_was_training = True
+        model.eval()
+
+    loss_dev_total = 0
+    for (X,y) in tqdm(dataloader):
+        X,y = X.to(device),y.to(device)
+        logits = model(X)
+        loss = criterion(logits,y)
+        loss_dev_total += loss.item()
+
+        y_true = torch.cat([y_true,y.cpu().argmax(axis=1)])
+        y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1)])
+
+    cms(y_true=y_true,y_pred=y_pred.cpu(),loss=loss_dev_total/len(dataloader))
+
+    if(model_was_training):
+        model.train()
+
+    return loss_dev_total/len(dataloader)

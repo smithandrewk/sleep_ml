@@ -16,3 +16,4 @@ project
 data_pt
 aging*
 windowed
+lib/__pycache__

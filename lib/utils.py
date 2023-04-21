@@ -204,4 +204,4 @@ def test_evaluation(dataloader,model,criterion,device='cuda'):
     if(model_was_training):
         model.train()
 
-    return loss_dev_total/len(dataloader)
+    return loss_dev_total/len(dataloader),y_true,y_pred

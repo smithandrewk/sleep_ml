@@ -82,12 +82,12 @@ class ResidualBlock(nn.Module):
 class ResNet(nn.Module):
     def __init__(self,device='cuda') -> None:
         super().__init__()
-        self.block1 = ResidualBlock(1,64).to(device)
-        self.block2 = ResidualBlock(64,128).to(device)
-        self.block3 = ResidualBlock(128,128).to(device)
+        self.block1 = ResidualBlock(1,8).to(device)
+        self.block2 = ResidualBlock(8,16).to(device)
+        self.block3 = ResidualBlock(16,16).to(device)
 
         self.gap = nn.AvgPool1d(kernel_size=5000)
-        self.fc1 = nn.Linear(in_features=128,out_features=3)
+        self.fc1 = nn.Linear(in_features=16,out_features=3)
     def forward(self,x):
         x = x.view(-1,1,5000)
         x = self.block1(x)

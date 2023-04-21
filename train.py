@@ -19,8 +19,6 @@ from lib.datasets import Dataset2p0
 from torch.utils.data import DataLoader
 from torch.nn.functional import softmax
 
-data_dir = 'data/w1_balanced_normalized'
-
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
@@ -31,8 +29,10 @@ parser.add_argument("-b", "--batch", type=int, default=64,help="Batch Size")
 parser.add_argument("-l", "--lr", type=float, default=3e-4,help="Learning Rate")
 parser.add_argument("-o", "--dropout", type=float, default=.2,help="Dropout")
 parser.add_argument("-i", "--hidden", type=int, default=32,help="Hidden Layer Neurons")
+parser.add_argument("-u", "--directory", type=str, default='.',help="Data Directory",required=True)
 args = parser.parse_args()
 
+data_dir = args.directory
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = args.project
 
@@ -51,7 +51,7 @@ if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
 trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=args.batch,shuffle=True)
-devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/test/',labels=f'{data_dir}/y_test.pt'),batch_size=args.batch,shuffle=True)
+devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/dev/',labels=f'{data_dir}/y_dev.pt'),batch_size=args.batch,shuffle=True)
 
 model = MODEL()
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
@@ -106,22 +106,22 @@ for epoch in pbar:
         loss_dev_total += loss.item()
     loss_dev.append(loss_dev_total/len(devloader))
 
-    pbar.set_description(f'\033[94mDev Loss: {loss_tr[-1]:.4f}\033[93m Val Loss: {loss_dev[-1]:.4f}\033[0m')
+    pbar.set_description(f'\033[94m Train Loss: {loss_tr[-1]:.4f}\033[93m Dev Loss: {loss_dev[-1]:.4f}\033[0m')
 
     # plot recent loss
     plt.plot(loss_tr[-30:])
     plt.plot(loss_dev[-30:])
-    plt.savefig(f'{project_dir}/{current_date}/loss.jpg')
+    plt.savefig(f'{project_dir}/{current_date}/loss_last_30.jpg')
     plt.close()
 
     # plot all loss
     plt.plot(loss_tr)
     plt.plot(loss_dev)
-    plt.savefig(f'{project_dir}/{current_date}/curr_loss.jpg')
+    plt.savefig(f'{project_dir}/{current_date}/loss_all_epochs.jpg')
     plt.close()
 
     # save on checkpoint
-    torch.save(model,f'{project_dir}/{current_date}/{epoch}.pt')
+    torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/{epoch}.pt')
 
 # test confusion matrices
 y_true = torch.Tensor()

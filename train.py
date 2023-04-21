@@ -42,7 +42,8 @@ config = {
     'EPOCHS':args.epochs,
     'RESUME':args.resume,
     'START_TIME':current_date,
-    'LEARNING_RATE':args.lr
+    'LEARNING_RATE':args.lr,
+    'DATA_DIR':data_dir
 }
 
 if not os.path.isdir(project_dir):

@@ -43,19 +43,19 @@ class CNN(nn.Module):
 
         return x
 class ResidualBlock(nn.Module):
-    def __init__(self,in_feature_maps,out_feature_maps) -> None:
+    def __init__(self,in_feature_maps,out_feature_maps,n_features) -> None:
         super().__init__()
         self.c1 = nn.Conv1d(in_feature_maps,out_feature_maps,kernel_size=8,padding='same',bias=False)
-        self.bn1 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
+        self.bn1 = nn.LayerNorm((out_feature_maps,n_features),elementwise_affine=False)
 
         self.c2 = nn.Conv1d(out_feature_maps,out_feature_maps,kernel_size=5,padding='same',bias=False)
-        self.bn2 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
+        self.bn2 = nn.LayerNorm((out_feature_maps,n_features),elementwise_affine=False)
 
         self.c3 = nn.Conv1d(out_feature_maps,out_feature_maps,kernel_size=3,padding='same',bias=False)
-        self.bn3 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
+        self.bn3 = nn.LayerNorm((out_feature_maps,n_features),elementwise_affine=False)
 
         self.c4 = nn.Conv1d(in_feature_maps,out_feature_maps,1,padding='same',bias=False)
-        self.bn4 = nn.LayerNorm((out_feature_maps,5000),elementwise_affine=False)
+        self.bn4 = nn.LayerNorm((out_feature_maps,n_features),elementwise_affine=False)
 
     def forward(self,x):
         identity = x
@@ -80,58 +80,60 @@ class ResidualBlock(nn.Module):
         return x
 
 class ResNet(nn.Module):
-    def __init__(self,device='cuda') -> None:
+    def __init__(self,n_features,device='cuda') -> None:
         super().__init__()
-        self.block1 = ResidualBlock(1,8).to(device)
-        self.block2 = ResidualBlock(8,16).to(device)
-        self.block3 = ResidualBlock(16,16).to(device)
+        self.n_features = n_features
+        self.block1 = ResidualBlock(1,8,n_features).to(device)
+        self.block2 = ResidualBlock(8,16,n_features).to(device)
+        self.block3 = ResidualBlock(16,16,n_features).to(device)
 
-        self.gap = nn.AvgPool1d(kernel_size=5000)
+        self.gap = nn.AvgPool1d(kernel_size=n_features)
         self.fc1 = nn.Linear(in_features=16,out_features=3)
     def forward(self,x):
-        x = x.view(-1,1,5000)
+        x = x.view(-1,1,self.n_features)
         x = self.block1(x)
         x = self.block2(x)
         x = self.block3(x)
         x = self.gap(x)
         x = self.fc1(x.squeeze())
         return x
-class CNNLSTM(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.resnet = ResNet().cuda()
-        self.lstm = nn.LSTM(3,64)
-        self.fc1 = nn.Linear(64,3)
-    def forward(self,x_2d):
-        x_2d = x_2d.view(-1,3,1,5000)
-        x = torch.Tensor().cuda()
-        for t in range(x_2d.size(1)):
-            x_i = self.resnet(x_2d[:,t,:,:])
-            x_i = x_i.view(-1,3)
-            out,_ = self.lstm(x_i)
-        x = self.fc1(out)        
-        return x
-class CNNBiLSTM(nn.Module):
-    def __init__(self,device='cuda') -> None:
-        super().__init__()
-        self.resnet = ResNet().to(device)
-        self.lstm_forward = nn.LSTM(3,128)
-        self.lstm_backward = nn.LSTM(3,128)
-        self.do1 = nn.Dropout(p=.2)
-        self.fc1 = nn.Linear(256,3)
-    def forward(self,x_2d):
-        x_2d = x_2d.view(-1,9,1,5000)
-        for t in range(5):
-            x_i = self.resnet(x_2d[:,t,:,:])
-            x_i = x_i.view(-1,3)
-            f,_ = self.lstm_forward(x_i)
-        for t in range(5):
-            x_i = self.resnet(x_2d[:,-t,:,:])
-            x_i = x_i.view(-1,3)
-            b,_ = self.lstm_backward(x_i)
-        x = torch.cat([f,b],axis=1)
-        x = self.do1(x)
-        x = self.fc1(x)        
-        return x
+
+# class CNNLSTM(nn.Module):
+#     def __init__(self) -> None:
+#         super().__init__()
+#         self.resnet = ResNet().cuda()
+#         self.lstm = nn.LSTM(3,64)
+#         self.fc1 = nn.Linear(64,3)
+#     def forward(self,x_2d):
+#         x_2d = x_2d.view(-1,3,1,5000)
+#         x = torch.Tensor().cuda()
+#         for t in range(x_2d.size(1)):
+#             x_i = self.resnet(x_2d[:,t,:,:])
+#             x_i = x_i.view(-1,3)
+#             out,_ = self.lstm(x_i)
+#         x = self.fc1(out)        
+#         return x
+# class CNNBiLSTM(nn.Module):
+#     def __init__(self,device='cuda') -> None:
+#         super().__init__()
+#         self.resnet = ResNet().to(device)
+#         self.lstm_forward = nn.LSTM(3,128)
+#         self.lstm_backward = nn.LSTM(3,128)
+#         self.do1 = nn.Dropout(p=.2)
+#         self.fc1 = nn.Linear(256,3)
+#     def forward(self,x_2d):
+#         x_2d = x_2d.view(-1,9,1,5000)
+#         for t in range(5):
+#             x_i = self.resnet(x_2d[:,t,:,:])
+#             x_i = x_i.view(-1,3)
+#             f,_ = self.lstm_forward(x_i)
+#         for t in range(5):
+#             x_i = self.resnet(x_2d[:,-t,:,:])
+#             x_i = x_i.view(-1,3)
+#             b,_ = self.lstm_backward(x_i)
+#         x = torch.cat([f,b],axis=1)
+#         x = self.do1(x)
+#         x = self.fc1(x)        
+#         return x
 
     

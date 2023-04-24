@@ -198,8 +198,8 @@ def test_evaluation(dataloader,model,criterion,device='cuda'):
 
         y_true = torch.cat([y_true,y.cpu().argmax(axis=1)])
         y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1)])
-
-    cms(y_true=y_true,y_pred=y_pred.cpu(),loss=loss_dev_total/len(dataloader))
+    y_pred = y_pred.cpu()
+    cms(y_true=y_true,y_pred=y_pred,loss=loss_dev_total/len(dataloader))
 
     if(model_was_training):
         model.train()

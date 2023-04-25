@@ -139,4 +139,18 @@ class CNNBiLSTM(nn.Module):
         x = self.fc1(x)        
         return x
 
-    
+class BigPapa(nn.Module):
+    def __init__(self,device='cuda') -> None:
+        super().__init__()
+        self.device = device
+        self.resnet = ResNet(5000).to(device)
+        self.lstm = nn.LSTM(input_size=16,hidden_size=2,batch_first=True,bidirectional=True)
+        self.fc1 = nn.Linear(2*2*9,3)
+    def forward(self,x):
+        x_t = x.view(-1,9,1,5000)
+        x = torch.Tensor().to(self.device)
+        for t in range(x_t.size(1)):
+            x = torch.cat([x,self.resnet(x_t[:,t,:,:],classification=False).unsqueeze(1)],dim=1)
+        x,_ = self.lstm(x)
+        x = self.fc1(x.reshape(-1,2*2*9))
+        return x

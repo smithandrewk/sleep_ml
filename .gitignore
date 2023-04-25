@@ -13,6 +13,8 @@ project
 *.pyc
 *.pt
 *.csv 
+*.json
+*.tar
 data_pt
 aging*
 windowed

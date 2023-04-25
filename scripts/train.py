@@ -54,7 +54,7 @@ if not os.path.isdir(f'{project_dir}/{current_date}'):
 trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=args.batch,shuffle=True)
 devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/dev/',labels=f'{data_dir}/y_dev.pt'),batch_size=args.batch,shuffle=True)
 
-model = MODEL()
+model = MODEL(15000)
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
 print("Params: ",params)
 if(config['RESUME']):

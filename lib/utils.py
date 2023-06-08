@@ -13,6 +13,96 @@ from torch.nn.functional import relu,one_hot
 from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import balanced_accuracy_score,accuracy_score
+from torch.utils.data import TensorDataset,DataLoader
+from lib.models import *
+import os
+import sqlite3
+from sqlite3 import Error
+import random
+from sklearn.metrics import f1_score,recall_score,precision_score,confusion_matrix
+
+import os
+from lib.env import *
+def get_ekyn_ids(DATA_PATH=DATA_PATH):
+    return sorted(os.listdir(f'{DATA_PATH}/ekyn'))
+
+def load_raw_edf(id='A1-1',condition='Vehicle',DATA_PATH=DATA_PATH):
+    raw = read_raw_edf(f'{DATA_PATH}/ekyn/{id}/{condition}.edf',verbose=False)
+    raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
+    raw.set_channel_types({'EEG':'eeg','EMG':'emg'},verbose=False)
+    return raw
+
+def load_eeg(id='A1-1',condition='Vehicle'):
+    raw = load_raw_edf(id=id,condition=condition)
+    return raw.get_data(picks='EEG')[0]
+
+def load_epoched_eeg(id='A1-1',condition='Vehicle'):
+    return torch.from_numpy(load_eeg(id=id,condition=condition).reshape(-1,5000)).float()
+
+def load_one_hot_labels(id='A1-1',condition='Vehicle',DATA_PATH=DATA_PATH):
+    df = pd.read_csv(f'{DATA_PATH}/ekyn/{id}/{condition}.csv')
+    df[df['label'] == 'X'] = pd.NA
+    df = df.fillna(method='ffill')
+    return one_hot(torch.from_numpy(pd.Categorical(df['label']).codes.copy()).long()).float()
+
+def load_eeg_label_pair(id='A1-1',condition='Vehicle'):
+    return (load_epoched_eeg(id=id,condition=condition),load_one_hot_labels(id=id,condition=condition))
+
+def get_cross_validation_split_for_fold(foldi=0):
+    ids = get_ekyn_ids()
+    random.seed(0)
+    random.shuffle(ids)
+    k = 4
+    start = foldi*k
+    stop = foldi*k+int(len(ids)/k)
+    test_ids = ids[start:stop]
+    for id in test_ids:
+        ids.remove(id)
+    return ids,test_ids
+
+def cm_grid(y_true,y_pred,save_path='cm.jpg'):
+    fig,axes = plt.subplots(2,2,figsize=(5,5))
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,fmt='.2f',cbar=False,ax=axes[0][0])
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='pred'),annot=True,fmt='.2f',cbar=False,ax=axes[0][1])
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='all'),annot=True,fmt='.2f',cbar=False,ax=axes[1][0])
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred),annot=True,fmt='.0f',cbar=False,ax=axes[1][1])
+    axes[0][0].set_title('Recall')
+    axes[0][1].set_title('Precision')
+    axes[1][0].set_title('Proportion')
+    axes[1][1].set_title('Count')
+    axes[0][0].set_xticks([])
+    axes[0][1].set_xticks([])
+    axes[0][1].set_yticks([])
+    axes[1][1].set_yticks([])
+    axes[0][0].set_yticklabels(['P','S','W'])
+    axes[1][0].set_yticklabels(['P','S','W'])
+    axes[1][0].set_xticklabels(['P','S','W'])
+    axes[1][1].set_xticklabels(['P','S','W'])
+    plt.savefig(save_path,dpi=200,bbox_inches='tight')
+
+def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
+    with torch.no_grad():
+        y_true = torch.Tensor()
+        y_pred = torch.Tensor()
+        y_logits = torch.Tensor()
+        loss_total = 0
+        for (Xi,yi) in dataloader:
+            y_true = torch.cat([y_true,yi.argmax(axis=1)])
+
+            Xi,yi = Xi.to(DEVICE),yi.to(DEVICE)
+            logits = model(Xi)
+            loss = criterion(logits,yi)
+            loss_total += loss.item()
+            
+            y_logits = torch.cat([y_logits,torch.softmax(logits,dim=1).detach().cpu()])
+            y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu()])
+    metrics = {
+        'precision':precision_score(y_true=y_true,y_pred=y_pred,average='macro'),
+        'recall':recall_score(y_true=y_true,y_pred=y_pred,average='macro'),
+        'f1':f1_score(y_true=y_true,y_pred=y_pred,average='macro')
+    }
+    return loss_total/len(dataloader),metrics,y_true,y_pred,y_logits
+
 def training_loss(train_dataloader,model,criterion,device):
     training_loss = 0
     for (X,y) in tqdm(train_dataloader):
@@ -21,27 +111,13 @@ def training_loss(train_dataloader,model,criterion,device):
         loss = criterion(logits,y)
         training_loss += loss.item()
     return training_loss/len(train_dataloader)
-def cms(y_true,y_pred,path='.',loss=0):
-    fig,axes = plt.subplots(1,3,sharey=True,figsize=(10,5))
-    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,ax=axes[0],cbar=False,fmt='.2f')
-    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='pred'),annot=True,ax=axes[1],cbar=False,fmt='.2f')
-    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred),annot=True,ax=axes[2],cbar=False,fmt='.2f')
-    axes[0].set_title('Recall')
-    axes[1].set_title('Precision')
-    axes[2].set_title('Count')
-    axes[0].set_xticklabels(['P','S','W'])
-    axes[1].set_xticklabels(['P','S','W'])
-    axes[2].set_xticklabels(['P','S','W'])
-    axes[0].set_yticklabels(['P','S','W'])
-    plt.suptitle(f'macro-recall : {balanced_accuracy_score(y_true=y_true,y_pred=y_pred)} loss : {loss}')
-    plt.savefig(f'{path}/cm.jpg',dpi=200,bbox_inches='tight')
-def load_raw(filename):
-    filepath = f'../data/alpha_sleep/{filename}.edf'
-    return load_raw_by_path(filepath)
+
+
+
 def load_raw_list(list):
     ret = pd.DataFrame()
 
-    raw = load_raw(list[0])
+    raw = load_alpha_sleep_by_index(list[0])
     df = load_psd(list[0])
     eeg = raw.get_data(picks='EEG')[0]
     X = pd.DataFrame(eeg.reshape(-1,5000))
@@ -50,7 +126,7 @@ def load_raw_list(list):
     append = pd.concat([y,X],axis=1)
     ret = pd.concat([ret,append])
     for i in list[1:]:
-        raw = load_raw(i)
+        raw = load_alpha_sleep_by_index(i)
         df = load_psd(i)
         eeg = raw.get_data(picks='EEG')[0]
         X = pd.DataFrame(eeg.reshape(-1,5000))
@@ -68,29 +144,7 @@ def load_raw_list(list):
     X = torch.from_numpy(X).float()
     y = one_hot(torch.from_numpy(y).long()).float()
     return (X,y)
-def load_raw_by_path(path):
-    raw = read_raw_edf(path,verbose=False)
-    raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
-    raw.set_channel_types({'EEG':'eeg','EMG':'emg'},verbose=False)
-    return raw
 
-def load_psd(fileindex):
-    df = pd.read_csv(f'../data/alpha_sleep/{fileindex}.csv')
-    return df
-
-def load_psd_list(list):
-    df = load_psd(list[0])
-    for i in list[1:]:
-        df = pd.concat([df,load_psd(i)])
-    df = df.reset_index(drop=True)
-    return df
-
-def load_all_psd():
-    df = load_psd(0)
-    for i in range(1,32):
-        df = pd.concat([df,load_psd(i)])
-    df = df.reset_index(drop=True)
-    return df
 def leave_one_out(left_out=0):
     df = pd.DataFrame()
     df_left_out = pd.DataFrame()
@@ -102,6 +156,7 @@ def leave_one_out(left_out=0):
         df = pd.concat([df,load_psd(i)])
     df = df.reset_index(drop=True)
     return df,df_left_out
+
 def leave_random_out(left_out=0):
     nums = np.arange(32)
     np.random.shuffle(nums)
@@ -129,29 +184,7 @@ def remove_outliers_from_eeg(eeg):
     eeg_no_outliers = imp_mean.fit_transform(eeg)
     return eeg_no_outliers
 
-def train_test_confusion_matrices(X_train,X_test,y_train,y_test,clf,title):
-    fig,axes = plt.subplots(nrows=1,ncols=2,figsize=(7.2,4.45),dpi=500,sharex=True,sharey=True)
-    y_pred = clf.predict(X_train)
-    cm = confusion_matrix(y_train,y_pred,normalize='true')
-    sns.heatmap(ax=axes[0],data=cm,annot=True)
-    y_pred = clf.predict(X_test)
-    cm = confusion_matrix(y_test,y_pred,normalize='true')
-    sns.heatmap(ax=axes[1],data=cm,annot=True)
-    fig.supxlabel('Predicted Label')
-    fig.supylabel('True Label')
-    axes[0].set_title(f'Training Data')
-    axes[1].set_title(f'Testing Data')
-    plt.suptitle(f'{title}',fontweight='heavy')
-    plt.savefig(f'figures/{title}_train_test.jpg',dpi=200,bbox_inches='tight')
-def test_confusion_matrix(X_test,y_test,clf,title):
-    plt.figure(figsize=(5,5),dpi=500)
-    y_pred = clf.predict(X_test)
-    cm = confusion_matrix(y_test,y_pred,normalize='true')
-    sns.heatmap(data=cm,annot=True)
-    plt.xlabel('Predicted Label')
-    plt.ylabel('True Label')
-    plt.title(f'{title}',fontweight='heavy')
-    plt.savefig(f'figures/{title}_test.jpg',dpi=200,bbox_inches='tight')
+
 
 def get_bout_statistics_for_predictions(pred):
     bout_lengths = {
@@ -180,6 +213,7 @@ def get_bout_statistics_for_predictions(pred):
     counts = {key:len(bout_lengths[key]) for key in bout_lengths}
     
     return pd.DataFrame([pd.Series(total,name='total'),pd.Series(average,name='average'),pd.Series(counts,name='counts')])
+
 def test_evaluation(dataloader,model,criterion,device='cuda'):
     y_true = torch.Tensor()
     y_pred = torch.Tensor().to(device)
@@ -205,3 +239,174 @@ def test_evaluation(dataloader,model,criterion,device='cuda'):
         model.train()
 
     return loss_dev_total/len(dataloader),y_true,y_pred
+
+def window_epoched_eeg(X,windowsize):
+    # only works for odd windows, puts label at center
+    cat = [X[:-(windowsize-1)]]
+    for i in range(1,(windowsize-1)):
+        cat.append(X[i:i-(windowsize-1)])
+    cat.append(X[(windowsize-1):])
+    X = torch.cat(cat,axis=1).float()
+    return X
+
+def zdb_logic(zdb_filename,csv_filename):
+    try:
+        conn = sqlite3.connect(zdb_filename)
+    except Error as e:
+        print(e)
+    cur = conn.cursor()
+    rename_dict = {'W':'Sleep-Wake', 'S':'Sleep-SWS', 'P':'Sleep-Paradoxical', 'X':''}
+    offset = 10e7 # epoch time period
+    # drop this table - creates issues
+    query = "DROP TABLE IF EXISTS temporary_scoring_marker;"
+    # get recordingstart
+    query = "SELECT value FROM internal_property WHERE key='RecordingStart'"
+    cur.execute(query)
+    result = cur.fetchall()
+    recording_start = float(result[0][0])
+    recording_start = recording_start - (recording_start % 100000000) # get lower bound of current epoch
+    cur.execute(query)
+    #delete first score before adding machine data
+    query = "DELETE FROM scoring_marker;"
+    cur.execute(query)
+    #delete first score before adding machine data
+    query = "DELETE FROM scoring_revision;"
+    cur.execute(query)
+    query = f"""
+        INSERT INTO scoring_revision 
+        (id, name, is_deleted, tags, version, owner, date_created)
+        VALUES 
+        (1, 'LSTM', 0,'',0,'',{recording_start});
+        """ 
+    cur.execute(query)
+    df = pd.read_csv(csv_filename)
+    y_pred = df.to_numpy().squeeze()
+    # insert new epochs with scoring into the table
+    stop_time = recording_start
+    for pred in y_pred:
+        # calculate epoch
+        start_time = stop_time
+        stop_time = start_time+offset
+
+        score = rename_dict[pred]
+        # insert epoch
+        query = f"""
+                INSERT INTO scoring_marker 
+                (starts_at, ends_at, notes, type, location, is_deleted, key_id)
+                VALUES 
+                ({start_time}, {stop_time}, '', '{score}', '', 0, 1);
+                """ 
+        cur.execute(query)
+    conn.commit()
+    conn.close()
+
+def score_edf_lstm(fileindex):
+    device = 'cuda'
+    model = BigPapa().to(device)
+    model.load_state_dict(torch.load('../models/84.pt',map_location='cuda'))
+
+    params = sum([p.flatten().size()[0] for p in list(model.parameters())])
+    print("Params: ",params)
+    EEG_1 = [1,8,14,15,16]
+    EEG_2 = [3,4,5,6,7,9,10,11,12,13,17]
+    raw = load_raw_by_path(f'../data/full/1_raw_edf/22-AGING-{fileindex}.edf').get_data(picks=['EEG','EMG'])
+    if(fileindex in EEG_1):
+        eeg = raw[0]
+    elif(fileindex in EEG_2):
+        eeg = raw[1]
+    else:
+        raise Exception("fileindex not in index guide")
+    X = torch.from_numpy(eeg.reshape(-1,5000)).float()
+    del eeg
+    # center, stretch
+    X = (X - X.mean(axis=1,keepdim=True))/X.std(axis=1,keepdim=True)
+    if(X.isinf().any()):
+        print("inf")
+    X = window_epoched_eeg(X,9)
+    dataloader = DataLoader(TensorDataset(X),batch_size=16)
+    y_pred = torch.Tensor().cuda()
+    model.eval()
+    for (X_test) in tqdm(dataloader):
+        X_test = X_test[0].to(device)
+        logits = model(X_test)
+        y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1)])
+    pred_expert = y_pred.cpu().numpy()
+    for j in range(len(pred_expert)-2):
+        if(pred_expert[j+1] != pred_expert[j] and pred_expert[j+1] != pred_expert[j+2]):
+            pred_expert[j+1] = pred_expert[j]
+    df = pd.DataFrame([pred_expert]).T
+    df[df[0] == 0] = 'P'
+    df[df[0] == 1] = 'S'
+    df[df[0] == 2] = 'W'
+    # TODO
+    df = pd.concat([pd.DataFrame(np.array(['X']*4)),df,pd.DataFrame(np.array(['X']*4))]).reset_index(drop=True)
+    if(not os.path.isdir(f'aging_pred')):
+        os.system('mkdir aging_pred')
+    df.to_csv(f'aging_pred/{fileindex}.csv',index=False)
+    return df
+
+"""
+
+Following functions are being DEPRECATED
+
+"""
+def load_psd(fileindex):
+    df = pd.read_csv(f'../data/alpha_sleep/{fileindex}.csv')
+    return df
+
+def load_psd_list(list):
+    df = load_psd(list[0])
+    for i in list[1:]:
+        df = pd.concat([df,load_psd(i)])
+    df = df.reset_index(drop=True)
+    return df
+
+def load_all_psd():
+    df = load_psd(0)
+    for i in range(1,32):
+        df = pd.concat([df,load_psd(i)])
+    df = df.reset_index(drop=True)
+    return df
+
+def load_alpha_sleep_by_index(filename):
+    filepath = f'../data/alpha_sleep/{filename}.edf'
+    return load_raw_by_path(filepath)
+def train_test_confusion_matrices(X_train,X_test,y_train,y_test,clf,title):
+    fig,axes = plt.subplots(nrows=1,ncols=2,figsize=(7.2,4.45),dpi=500,sharex=True,sharey=True)
+    y_pred = clf.predict(X_train)
+    cm = confusion_matrix(y_train,y_pred,normalize='true')
+    sns.heatmap(ax=axes[0],data=cm,annot=True)
+    y_pred = clf.predict(X_test)
+    cm = confusion_matrix(y_test,y_pred,normalize='true')
+    sns.heatmap(ax=axes[1],data=cm,annot=True)
+    fig.supxlabel('Predicted Label')
+    fig.supylabel('True Label')
+    axes[0].set_title(f'Training Data')
+    axes[1].set_title(f'Testing Data')
+    plt.suptitle(f'{title}',fontweight='heavy')
+    plt.savefig(f'figures/{title}_train_test.jpg',dpi=200,bbox_inches='tight')
+
+def test_confusion_matrix(X_test,y_test,clf,title):
+    plt.figure(figsize=(5,5),dpi=500)
+    y_pred = clf.predict(X_test)
+    cm = confusion_matrix(y_test,y_pred,normalize='true')
+    sns.heatmap(data=cm,annot=True)
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title(f'{title}',fontweight='heavy')
+    plt.savefig(f'figures/{title}_test.jpg',dpi=200,bbox_inches='tight')
+def cms(y_true,y_pred,path='.',loss=0):
+    fig,axes = plt.subplots(2,2,sharey=True,figsize=(10,5))
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,ax=axes[0],cbar=False,fmt='.2f')
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='pred'),annot=True,ax=axes[1],cbar=False,fmt='.2f')
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='all'),annot=True,ax=axes[2],cbar=False,fmt='.2f')
+    sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred),annot=True,ax=axes[3],cbar=False,fmt='.2f')
+    axes[0].set_title('Recall')
+    axes[1].set_title('Precision')
+    axes[2].set_title('Count')
+    axes[0].set_xticklabels(['P','S','W'])
+    axes[1].set_xticklabels(['P','S','W'])
+    axes[2].set_xticklabels(['P','S','W'])
+    axes[0].set_yticklabels(['P','S','W'])
+    plt.suptitle(f'macro-recall : {balanced_accuracy_score(y_true=y_true,y_pred=y_pred)} loss : {loss}')
+    plt.savefig(f'{path}/cm.jpg',dpi=200,bbox_inches='tight')

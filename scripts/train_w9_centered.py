@@ -142,5 +142,3 @@ with open(f'{project_dir}/config.json', 'w') as f:
      f.write(json.dumps(config))
 with open(f'{project_dir}/{current_date}/config.json', 'w') as f:
      f.write(json.dumps(config))
-
-# TODO: email on finish

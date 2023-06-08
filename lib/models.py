@@ -1,36 +1,41 @@
 from torch import nn
 from torch.nn.functional import relu
 import torch
-## w1 model
 class MLP(nn.Module):
     """
     MLP according to Wang et. al (proposed as 
     a baseline architecture for TSC)
     """
-    def __init__(self) -> None:
+    def __init__(self,input_size=5000) -> None:
         super().__init__()
-        self.do1 = nn.Dropout(p=0.1)
-        self.fc1 = nn.Linear(5000,500)
-        self.do2 = nn.Dropout(p=0.2)
+        self.d1 = nn.Dropout1d(p=.1)
+        self.fc1 = nn.Linear(input_size,500)
+
+        self.d2 = nn.Dropout1d(p=.2)
         self.fc2 = nn.Linear(500,500)
-        self.do3 = nn.Dropout(p=0.2)
+
+        self.d3 = nn.Dropout1d(p=.2)
         self.fc3 = nn.Linear(500,500)
-        self.do4 = nn.Dropout(p=0.3)
+
+        self.d4 = nn.Dropout1d(p=.3)
         self.fc4 = nn.Linear(500,3)
 
     def forward(self,x):
-        x = self.do1(x)
+        x = self.d1(x)
         x = self.fc1(x)
         x = relu(x)
-        x = self.do2(x)
+
+        x = self.d2(x)
         x = self.fc2(x)
         x = relu(x)
-        x = self.do3(x)
+
+        x = self.d3(x)
         x = self.fc3(x)
         x = relu(x)
-        x = self.do4(x)
+
+        x = self.d4(x)
         x = self.fc4(x)
-        
+
         return x
 class CNN(nn.Module):
     def __init__(self) -> None:

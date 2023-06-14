@@ -174,6 +174,6 @@ class BigPapa(nn.Module):
         x = torch.Tensor().to(self.device)
         for t in range(x_t.size(1)):
             x = torch.cat([x,self.resnet(x_t[:,t,:,:],classification=False).unsqueeze(1)],dim=1)
-        x,_ = self.lstm(x)
+        x,_ = self.lstm(x.view(-1,9,16))
         x = self.fc1(x.reshape(-1,2*8*9))
         return x

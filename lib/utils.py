@@ -26,11 +26,14 @@ from lib.env import *
 def get_ekyn_ids(DATA_PATH=DATA_PATH):
     return sorted(os.listdir(f'{DATA_PATH}/ekyn'))
 
-def load_raw_edf(id='A1-1',condition='Vehicle',DATA_PATH=DATA_PATH):
-    raw = read_raw_edf(f'{DATA_PATH}/ekyn/{id}/{condition}.edf',verbose=False)
+def load_raw_edf_by_path(path):
+    raw = read_raw_edf(path,verbose=False)
     raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
     raw.set_channel_types({'EEG':'eeg','EMG':'emg'},verbose=False)
     return raw
+
+def load_raw_edf(id='A1-1',condition='Vehicle',DATA_PATH=DATA_PATH):
+    return load_raw_edf_by_path(f'{DATA_PATH}/ekyn/{id}/{condition}.edf')
 
 def load_eeg(id='A1-1',condition='Vehicle'):
     raw = load_raw_edf(id=id,condition=condition)
@@ -299,8 +302,43 @@ def zdb_logic(zdb_filename,csv_filename):
         cur.execute(query)
     conn.commit()
     conn.close()
+def score_edf_lstm(id):
+    device = 'cuda'
+    model = BigPapa().to(device)
+    model.load_state_dict(torch.load('../models/84.pt',map_location='cuda'))
 
-def score_edf_lstm(fileindex):
+    params = sum([p.flatten().size()[0] for p in list(model.parameters())])
+    print("Params: ",params)
+    eeg = load_raw_edf_by_path(f'../courtney_aug_oct_2022_baseline_recordings/1_raw_edf/{id}.edf').get_data(picks=['EEG'])
+
+    X = torch.from_numpy(eeg.reshape(-1,5000)).float()
+    del eeg
+    # center, stretch
+    X = (X - X.mean(axis=1,keepdim=True))/X.std(axis=1,keepdim=True)
+    if(X.isinf().any()):
+        print("inf")
+    X = window_epoched_eeg(X,9)
+    dataloader = DataLoader(TensorDataset(X),batch_size=16)
+    y_pred = torch.Tensor().cuda()
+    model.eval()
+    for (X_test) in tqdm(dataloader):
+        X_test = X_test[0].to(device)
+        logits = model(X_test)
+        y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1)])
+    pred_expert = y_pred.cpu().numpy()
+    for j in range(len(pred_expert)-2):
+        if(pred_expert[j+1] != pred_expert[j] and pred_expert[j+1] != pred_expert[j+2]):
+            pred_expert[j+1] = pred_expert[j]
+    df = pd.DataFrame([pred_expert]).T
+    df[df[0] == 0] = 'P'
+    df[df[0] == 1] = 'S'
+    df[df[0] == 2] = 'W'
+    df = pd.concat([pd.DataFrame(np.array(['X']*4)),df,pd.DataFrame(np.array(['X']*4))]).reset_index(drop=True)
+    if(not os.path.isdir(f'aging_pred')):
+        os.system('mkdir aging_pred')
+    df.to_csv(f'aging_pred/{id}.csv',index=False)
+    return df
+def score_edf_lstm_aging(fileindex):
     device = 'cuda'
     model = BigPapa().to(device)
     model.load_state_dict(torch.load('../models/84.pt',map_location='cuda'))
@@ -309,7 +347,7 @@ def score_edf_lstm(fileindex):
     print("Params: ",params)
     EEG_1 = [1,8,14,15,16]
     EEG_2 = [3,4,5,6,7,9,10,11,12,13,17]
-    raw = load_raw_by_path(f'../data/full/1_raw_edf/22-AGING-{fileindex}.edf').get_data(picks=['EEG','EMG'])
+    raw = load_raw_by_path(f'../data/courtney/1_raw_edf/23-May-{fileindex}.edf').get_data(picks=['EEG','EMG'])
     if(fileindex in EEG_1):
         eeg = raw[0]
     elif(fileindex in EEG_2):

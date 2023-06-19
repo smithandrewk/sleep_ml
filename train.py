@@ -23,27 +23,27 @@ parser.add_argument('-r','--resume', action='store_true', help="when this flag i
 parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
-parser.add_argument("-b", "--batch", type=int, default=64,help="Batch Size")
-parser.add_argument("-l", "--lr", type=float, default=3e-4,help="Learning Rate")
-parser.add_argument("-o", "--dropout", type=float, default=.2,help="Dropout")
-parser.add_argument("-i", "--hidden", type=int, default=32,help="Hidden Layer Neurons")
-parser.add_argument("-u", "--directory", type=str, default='.',help="Data Directory",required=False)
+parser.add_argument("-f", "--fold", type=int, default=0,help="Fold")
 args = parser.parse_args()
 
-data_dir = args.directory
+data_dir = f'w1_cv_{args.fold}'
+make_cv_data_from_ekyn(args.fold,1)
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = args.project
 early_stopping = True
-patience = 20
+patience = 50
+lr = 3e-4
+batch_size = 32
 
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
-    'BATCH_SIZE':args.batch,
+    'BATCH_SIZE':batch_size,
     'EPOCHS':args.epochs,
     'RESUME':args.resume,
     'START_TIME':current_date,
-    'LEARNING_RATE':args.lr,
+    'LEARNING_RATE':lr,
     'DATA_DIR':data_dir,
+    'PATIENCE':patience
 }
 
 if not os.path.isdir(project_dir):
@@ -51,8 +51,13 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=64,shuffle=True)
-devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/dev/',labels=f'{data_dir}/y_dev.pt'),batch_size=64,shuffle=True)
+trainloader = DataLoader(Dataset2p0(dir=f'{data_dir}/train/',labels=f'{data_dir}/y_train.pt'),batch_size=batch_size,shuffle=True)
+devloader = DataLoader(Dataset2p0(dir=f'{data_dir}/dev/',labels=f'{data_dir}/y_dev.pt'),batch_size=batch_size,shuffle=True)
+testloader = DataLoader(Dataset2p0(dir=f'{data_dir}/test/',labels=f'{data_dir}/y_test.pt'),batch_size=batch_size,shuffle=True)
+
+print(f'trainloader: {len(trainloader)} batches')
+print(f'devloader: {len(devloader)} batches')
+print(f'testloader: {len(testloader)} batches')
 
 model = MLP()
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
@@ -122,7 +127,7 @@ for epoch in pbar:
                 cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/cm_best.jpg')
             else:
                 patiencei += 1
-                if(patiencei == 20):
+                if(patiencei == patience):
                     print("early stopping")
                     break
     best = config['best_dev_loss']
@@ -146,7 +151,7 @@ for epoch in pbar:
     torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/{epoch}.pt')
 
 loss,metrics,y_true,y_pred,y_logits = evaluate(devloader,model,criterion,device)
-cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/{current_date}/cm_last.jpg')
+cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/{current_date}/cm_last_dev.jpg')
 
 torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
 torch.save(model.state_dict(), f=f'{project_dir}/model.pt')

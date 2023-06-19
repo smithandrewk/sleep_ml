@@ -20,7 +20,7 @@ import sqlite3
 from sqlite3 import Error
 import random
 from sklearn.metrics import f1_score,recall_score,precision_score,confusion_matrix
-
+import json
 import os
 from lib.env import *
 def get_ekyn_ids(DATA_PATH=DATA_PATH):
@@ -82,7 +82,12 @@ def cm_grid(y_true,y_pred,save_path='cm.jpg'):
     axes[1][0].set_xticklabels(['P','S','W'])
     axes[1][1].set_xticklabels(['P','S','W'])
     plt.savefig(save_path,dpi=200,bbox_inches='tight')
-
+def metrics(y_true,y_pred):
+    return {
+        'precision':precision_score(y_true=y_true,y_pred=y_pred,average='macro'),
+        'recall':recall_score(y_true=y_true,y_pred=y_pred,average='macro'),
+        'f1':f1_score(y_true=y_true,y_pred=y_pred,average='macro')
+    }
 def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
     with torch.no_grad():
         y_true = torch.Tensor()
@@ -99,13 +104,17 @@ def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
             
             y_logits = torch.cat([y_logits,torch.softmax(logits,dim=1).detach().cpu()])
             y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu()])
-    metrics = {
-        'precision':precision_score(y_true=y_true,y_pred=y_pred,average='macro'),
-        'recall':recall_score(y_true=y_true,y_pred=y_pred,average='macro'),
-        'f1':f1_score(y_true=y_true,y_pred=y_pred,average='macro')
-    }
-    return loss_total/len(dataloader),metrics,y_true,y_pred,y_logits
 
+    return loss_total/len(dataloader),metrics(y_true,y_pred),y_true,y_pred,y_logits
+def get_leave_one_out_cv_ids_for_ekyn():
+    ids = get_ekyn_ids()
+    random.seed(0)
+    random.shuffle(ids) # shuffled list of rodents
+    ret = []
+    for test_id in ids:
+        train_ids = [x for x in ids if x != test_id]
+        ret.append((test_id,train_ids))
+    return ret
 def training_loss(train_dataloader,model,criterion,device):
     training_loss = 0
     for (X,y) in tqdm(train_dataloader):
@@ -115,7 +124,74 @@ def training_loss(train_dataloader,model,criterion,device):
         training_loss += loss.item()
     return training_loss/len(train_dataloader)
 
+def make_cv_data_from_ekyn(foldi=0,window_size=1):
+    train_size = .95
+    data_dir = f'w{window_size}_cv_{foldi}'
+    x_train_i = 0
+    x_dev_i = 0
+    normalize = False
+    test_id,train_ids = get_leave_one_out_cv_ids_for_ekyn()[foldi]
 
+    if(os.path.isdir(data_dir)):
+        print(f'{data_dir} already exists')
+        return
+    os.makedirs(data_dir)
+    os.makedirs(f'{data_dir}/train')
+    os.makedirs(f'{data_dir}/dev')
+
+    config = {
+        'TRAIN_SIZE':train_size,
+        'TRAIN_IDS':train_ids,
+        'TEST_IDS':test_id,
+        'NORMALIZED':normalize,
+    }
+
+    with open(f'{data_dir}/config.json', 'w') as f:
+        f.write(json.dumps(config))
+
+    y_train_all = torch.Tensor()
+    y_dev_all = torch.Tensor()
+
+    for id in tqdm(train_ids):
+        for condition in ['PF','Vehicle']:
+            X,y = load_eeg_label_pair(id=id,condition=condition)
+            if(normalize):
+                # center, stretch
+                X = (X - X.mean(axis=1,keepdim=True))/X.std(axis=1,keepdim=True)
+                # drop row if any element is inf
+                not_inf_idx = torch.where(~X.isinf().any(axis=1))[0]
+                X,y = X[not_inf_idx], y[not_inf_idx]
+            # train test split for each file, approximates the same for train-test-splitting the entire set
+            X_train,X_dev,y_train,y_dev = train_test_split(X,y,test_size=(1-train_size),shuffle=True,stratify=y,random_state=0)
+            for Xi in X_train:
+                torch.save(Xi.clone(),f'{data_dir}/train/{x_train_i}.pt')
+                x_train_i += 1
+            for Xi in X_dev:
+                torch.save(Xi.clone(),f'{data_dir}/dev/{x_dev_i}.pt')
+                x_dev_i += 1
+            y_train_all = torch.cat([y_train_all,y_train])
+            y_dev_all = torch.cat([y_dev_all,y_dev])
+
+    torch.save(y_train_all,f'{data_dir}/y_train.pt')
+    torch.save(y_dev_all,f'{data_dir}/y_dev.pt')
+
+    y_test_all = torch.Tensor()
+    os.makedirs(f'{data_dir}/test')
+    x_test_i = 0
+
+    for condition in ['PF','Vehicle']:
+        X,y = load_eeg_label_pair(id=test_id,condition=condition)
+        if(normalize):
+            # center, stretch
+            X = (X - X.mean(axis=1,keepdim=True))/X.std(axis=1,keepdim=True)
+            # drop row if any element is inf
+            not_inf_idx = torch.where(~X.isinf().any(axis=1))[0]
+            X,y = X[not_inf_idx], y[not_inf_idx]
+        for Xi in X:
+            torch.save(Xi.clone(),f'{data_dir}/test/{x_test_i}.pt')
+            x_test_i += 1
+        y_test_all = torch.cat([y_test_all,y])
+    torch.save(y_test_all,f'{data_dir}/y_test.pt')
 
 def load_raw_list(list):
     ret = pd.DataFrame()
@@ -382,3 +458,20 @@ def score_edf_lstm_aging(fileindex):
         os.system('mkdir aging_pred')
     df.to_csv(f'aging_pred/{fileindex}.csv',index=False)
     return df
+class UniformRandomClassifier():
+    def __init__(self) -> None:
+        pass
+    def predict(self,x):
+        uniform_random_y_pred = torch.randint(0,3,(len(x),))
+        return uniform_random_y_pred
+class ProportionalRandomClassifier():
+    def __init__(self) -> None:
+        pass
+    def predict(self,x):
+        proportional_random_y_pred = torch.rand((len(x)))
+        proportional_random_y_pred[proportional_random_y_pred <= .0613] = 2 # P
+        proportional_random_y_pred[proportional_random_y_pred <= (.4558 + .0613)] = 4 # W
+        proportional_random_y_pred[proportional_random_y_pred <= 1] = 3 # S
+        proportional_random_y_pred = proportional_random_y_pred - 2
+        proportional_random_y_pred = proportional_random_y_pred.long()
+        return proportional_random_y_pred

@@ -20,7 +20,7 @@ from lib.datasets import Dataset2p0
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
-parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of training iterations")
+parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
 parser.add_argument("-f", "--fold", type=int, default=0,help="Fold")

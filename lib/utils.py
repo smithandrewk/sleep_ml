@@ -113,7 +113,7 @@ def get_leave_one_out_cv_ids_for_ekyn():
     ret = []
     for test_id in ids:
         train_ids = [x for x in ids if x != test_id]
-        ret.append((test_id,train_ids))
+        ret.append((train_ids,test_id))
     return ret
 def training_loss(train_dataloader,model,criterion,device):
     training_loss = 0
@@ -461,11 +461,15 @@ def score_edf_lstm_aging(fileindex):
 class UniformRandomClassifier():
     def __init__(self) -> None:
         pass
+    def fit(self,x,y):
+        pass
     def predict(self,x):
         uniform_random_y_pred = torch.randint(0,3,(len(x),))
         return uniform_random_y_pred
 class ProportionalRandomClassifier():
     def __init__(self) -> None:
+        pass
+    def fit(self,x,y):
         pass
     def predict(self,x):
         proportional_random_y_pred = torch.rand((len(x)))

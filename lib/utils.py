@@ -2,66 +2,27 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
-import plotly.express as px
 from mne.io import read_raw_edf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import ConfusionMatrixDisplay
 import torch
-from torch import nn
-from torch.nn.functional import relu,one_hot
 from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
-from sklearn.metrics import balanced_accuracy_score,accuracy_score
 from torch.utils.data import TensorDataset,DataLoader
 from lib.models import *
 import os
 import sqlite3
 from sqlite3 import Error
-import random
 from sklearn.metrics import f1_score,recall_score,precision_score,confusion_matrix
 import json
 import os
 from lib.env import *
-def get_ekyn_ids(DATA_PATH=DATA_PATH):
-    return sorted(os.listdir(f'{DATA_PATH}/ekyn'))
 
 def load_raw_edf_by_path(path):
     raw = read_raw_edf(path,verbose=False)
     raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
     raw.set_channel_types({'EEG':'eeg','EMG':'emg'},verbose=False)
     return raw
-
-def load_raw_edf(id='A1-1',condition='Vehicle',DATA_PATH=DATA_PATH):
-    return load_raw_edf_by_path(f'{DATA_PATH}/ekyn/{id}/{condition}.edf')
-
-def load_eeg(id='A1-1',condition='Vehicle'):
-    raw = load_raw_edf(id=id,condition=condition)
-    return raw.get_data(picks='EEG')[0]
-
-def load_epoched_eeg(id='A1-1',condition='Vehicle'):
-    return torch.from_numpy(load_eeg(id=id,condition=condition).reshape(-1,5000)).float()
-
-def load_one_hot_labels(id='A1-1',condition='Vehicle',DATA_PATH=DATA_PATH):
-    df = pd.read_csv(f'{DATA_PATH}/ekyn/{id}/{condition}.csv')
-    df[df['label'] == 'X'] = pd.NA
-    df = df.fillna(method='ffill')
-    return one_hot(torch.from_numpy(pd.Categorical(df['label']).codes.copy()).long()).float()
-
-def load_eeg_label_pair(id='A1-1',condition='Vehicle'):
-    return (load_epoched_eeg(id=id,condition=condition),load_one_hot_labels(id=id,condition=condition))
-
-def get_cross_validation_split_for_fold(foldi=0):
-    ids = get_ekyn_ids()
-    random.seed(0)
-    random.shuffle(ids)
-    k = 4
-    start = foldi*k
-    stop = foldi*k+int(len(ids)/k)
-    test_ids = ids[start:stop]
-    for id in test_ids:
-        ids.remove(id)
-    return ids,test_ids
 
 def cm_grid(y_true,y_pred,save_path='cm.jpg'):
     fig,axes = plt.subplots(2,2,figsize=(5,5))
@@ -82,12 +43,14 @@ def cm_grid(y_true,y_pred,save_path='cm.jpg'):
     axes[1][0].set_xticklabels(['P','S','W'])
     axes[1][1].set_xticklabels(['P','S','W'])
     plt.savefig(save_path,dpi=200,bbox_inches='tight')
+
 def metrics(y_true,y_pred):
     return {
         'precision':precision_score(y_true=y_true,y_pred=y_pred,average='macro'),
         'recall':recall_score(y_true=y_true,y_pred=y_pred,average='macro'),
         'f1':f1_score(y_true=y_true,y_pred=y_pred,average='macro')
     }
+
 def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
     with torch.no_grad():
         y_true = torch.Tensor()
@@ -106,23 +69,17 @@ def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
             y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu()])
 
     return loss_total/len(dataloader),metrics(y_true,y_pred),y_true,y_pred,y_logits
-def get_leave_one_out_cv_ids_for_ekyn():
-    ids = get_ekyn_ids()
-    random.seed(0)
-    random.shuffle(ids) # shuffled list of rodents
-    ret = []
-    for test_id in ids:
-        train_ids = [x for x in ids if x != test_id]
-        ret.append((train_ids,test_id))
-    return ret
-def training_loss(train_dataloader,model,criterion,device):
-    training_loss = 0
-    for (X,y) in tqdm(train_dataloader):
-        X,y = X.to(device), y.to(device)
-        logits = model(X)
-        loss = criterion(logits,y)
-        training_loss += loss.item()
-    return training_loss/len(train_dataloader)
+
+def window_epoched_signal(X,windowsize):
+    """
+    only works for odd windows, puts label at center
+    """
+    cat = [X[:-(windowsize-1)]]
+    for i in range(1,(windowsize-1)):
+        cat.append(X[i:i-(windowsize-1)])
+    cat.append(X[(windowsize-1):])
+    X = torch.cat(cat,axis=1).float()
+    return X
 
 def make_cv_data_from_ekyn(foldi=0,window_size=1):
     train_size = .95
@@ -193,60 +150,6 @@ def make_cv_data_from_ekyn(foldi=0,window_size=1):
         y_test_all = torch.cat([y_test_all,y])
     torch.save(y_test_all,f'{data_dir}/y_test.pt')
 
-def load_raw_list(list):
-    ret = pd.DataFrame()
-
-    raw = load_alpha_sleep_by_index(list[0])
-    df = load_psd(list[0])
-    eeg = raw.get_data(picks='EEG')[0]
-    X = pd.DataFrame(eeg.reshape(-1,5000))
-    y = df['label']
-
-    append = pd.concat([y,X],axis=1)
-    ret = pd.concat([ret,append])
-    for i in list[1:]:
-        raw = load_alpha_sleep_by_index(i)
-        df = load_psd(i)
-        eeg = raw.get_data(picks='EEG')[0]
-        X = pd.DataFrame(eeg.reshape(-1,5000))
-        y = df['label']
-
-        append = pd.concat([y,X],axis=1)
-        ret = pd.concat([ret,append])
-
-    ret = ret.reset_index(drop=True)
-    ret = ret[ret['label'] != 'X']
-
-    y = np.array(pd.Categorical(ret.pop('label')).codes)
-    X = ret.to_numpy()
-
-    X = torch.from_numpy(X).float()
-    y = one_hot(torch.from_numpy(y).long()).float()
-    return (X,y)
-
-def leave_one_out(left_out=0):
-    df = pd.DataFrame()
-    df_left_out = pd.DataFrame()
-
-    for i in range(0,32):
-        if(i==left_out):
-            df_left_out = load_psd(i)
-            continue
-        df = pd.concat([df,load_psd(i)])
-    df = df.reset_index(drop=True)
-    return df,df_left_out
-
-def leave_random_out(left_out=0):
-    nums = np.arange(32)
-    np.random.shuffle(nums)
-    #wlog leave nums[0] out
-    df_left_out = load_psd(nums[0])
-    df = load_psd(nums[1])
-    for i in nums[2:]:
-        df = pd.concat([df,load_psd(i)])
-    df = df.reset_index(drop=True)
-    return df,df_left_out
-
 def remove_outliers_from_eeg(eeg):
     from sklearn.impute import SimpleImputer
     eeg = eeg.reshape(-1,1)
@@ -262,8 +165,6 @@ def remove_outliers_from_eeg(eeg):
     imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     eeg_no_outliers = imp_mean.fit_transform(eeg)
     return eeg_no_outliers
-
-
 
 def get_bout_statistics_for_predictions(pred):
     bout_lengths = {
@@ -293,40 +194,7 @@ def get_bout_statistics_for_predictions(pred):
     
     return pd.DataFrame([pd.Series(total,name='total'),pd.Series(average,name='average'),pd.Series(counts,name='counts')])
 
-def test_evaluation(dataloader,model,criterion,device='cuda'):
-    y_true = torch.Tensor()
-    y_pred = torch.Tensor().to(device)
-    model_was_training = False
-    if(model.training):
-        # note that this changes the state of the model outside the scope of this function
-        model_was_training = True
-        model.eval()
 
-    loss_dev_total = 0
-    for (X,y) in tqdm(dataloader):
-        X,y = X.to(device),y.to(device)
-        logits = model(X)
-        loss = criterion(logits,y)
-        loss_dev_total += loss.item()
-
-        y_true = torch.cat([y_true,y.cpu().argmax(axis=1)])
-        y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1)])
-    y_pred = y_pred.cpu()
-    cms(y_true=y_true,y_pred=y_pred,loss=loss_dev_total/len(dataloader))
-
-    if(model_was_training):
-        model.train()
-
-    return loss_dev_total/len(dataloader),y_true,y_pred
-
-def window_epoched_eeg(X,windowsize):
-    # only works for odd windows, puts label at center
-    cat = [X[:-(windowsize-1)]]
-    for i in range(1,(windowsize-1)):
-        cat.append(X[i:i-(windowsize-1)])
-    cat.append(X[(windowsize-1):])
-    X = torch.cat(cat,axis=1).float()
-    return X
 
 def zdb_logic(zdb_filename,csv_filename):
     try:
@@ -458,24 +326,3 @@ def score_edf_lstm_aging(fileindex):
         os.system('mkdir aging_pred')
     df.to_csv(f'aging_pred/{fileindex}.csv',index=False)
     return df
-class UniformRandomClassifier():
-    def __init__(self) -> None:
-        pass
-    def fit(self,x,y):
-        pass
-    def predict(self,x):
-        uniform_random_y_pred = torch.randint(0,3,(len(x),))
-        return uniform_random_y_pred
-class ProportionalRandomClassifier():
-    def __init__(self) -> None:
-        pass
-    def fit(self,x,y):
-        pass
-    def predict(self,x):
-        proportional_random_y_pred = torch.rand((len(x)))
-        proportional_random_y_pred[proportional_random_y_pred <= .0613] = 2 # P
-        proportional_random_y_pred[proportional_random_y_pred <= (.4558 + .0613)] = 4 # W
-        proportional_random_y_pred[proportional_random_y_pred <= 1] = 3 # S
-        proportional_random_y_pred = proportional_random_y_pred - 2
-        proportional_random_y_pred = proportional_random_y_pred.long()
-        return proportional_random_y_pred

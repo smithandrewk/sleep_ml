@@ -177,3 +177,24 @@ class BigPapa(nn.Module):
         x,_ = self.lstm(x.view(-1,9,16))
         x = self.fc1(x.reshape(-1,2*8*9))
         return x
+class UniformRandomClassifier():
+    def __init__(self) -> None:
+        pass
+    def fit(self,x,y):
+        pass
+    def predict(self,x):
+        uniform_random_y_pred = torch.randint(0,3,(len(x),))
+        return uniform_random_y_pred
+class ProportionalRandomClassifier():
+    def __init__(self) -> None:
+        pass
+    def fit(self,x,y):
+        pass
+    def predict(self,x):
+        proportional_random_y_pred = torch.rand((len(x)))
+        proportional_random_y_pred[proportional_random_y_pred <= .0613] = 2 # P
+        proportional_random_y_pred[proportional_random_y_pred <= (.4558 + .0613)] = 4 # W
+        proportional_random_y_pred[proportional_random_y_pred <= 1] = 3 # S
+        proportional_random_y_pred = proportional_random_y_pred - 2
+        proportional_random_y_pred = proportional_random_y_pred.long()
+        return proportional_random_y_pred

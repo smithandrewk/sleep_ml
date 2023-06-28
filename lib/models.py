@@ -6,19 +6,19 @@ class MLP(nn.Module):
     MLP according to Wang et. al (proposed as 
     a baseline architecture for TSC)
     """
-    def __init__(self,input_size=5000) -> None:
+    def __init__(self,input_size=5000,hidden_sizes=(500,500,500)) -> None:
         super().__init__()
         self.d1 = nn.Dropout1d(p=.1)
-        self.fc1 = nn.Linear(input_size,500)
+        self.fc1 = nn.Linear(input_size,hidden_sizes[0])
 
         self.d2 = nn.Dropout1d(p=.2)
-        self.fc2 = nn.Linear(500,500)
+        self.fc2 = nn.Linear(hidden_sizes[0],hidden_sizes[1])
 
         self.d3 = nn.Dropout1d(p=.2)
-        self.fc3 = nn.Linear(500,500)
+        self.fc3 = nn.Linear(hidden_sizes[1],hidden_sizes[2])
 
         self.d4 = nn.Dropout1d(p=.3)
-        self.fc4 = nn.Linear(500,3)
+        self.fc4 = nn.Linear(hidden_sizes[2],3)
 
     def forward(self,x):
         x = self.d1(x)

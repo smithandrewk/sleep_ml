@@ -23,9 +23,10 @@ parser.add_argument('-r','--resume', action='store_true', help="when this flag i
 parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
+parser.add_argument("-f", "--fold", type=str, default=0,help="Fold from 0-15")
 args = parser.parse_args()
 
-fold = 0
+fold = args.fold
 model = RecreatedMLP(input_size=210)
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = f'mlp_fold_{fold}'

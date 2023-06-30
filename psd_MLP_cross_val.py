@@ -82,7 +82,7 @@ if(config['RESUME']):
 
 config['END_EPOCH'] = config['START_EPOCH'] + config['EPOCHS'] - 1
 
-model.to(device)
+model.to(DEVICE)
 
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(),lr=lr)
@@ -128,7 +128,7 @@ for epoch in pbar:
     # save on checkpoint
     torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/{epoch}.pt')
 
-_,_,y_true,y_pred,_ = evaluate(devloader,model,criterion,device)
+_,_,y_true,y_pred,_ = evaluate(devloader,model,criterion,DEVICE)
 cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/{current_date}/cm_last_dev.jpg')
 
 torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/last_model.pt')

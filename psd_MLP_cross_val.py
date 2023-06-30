@@ -34,7 +34,7 @@ patience = 20
 lr = 3e-4
 batch_size = 32
 
-device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
     'MODEL':str(model),
     'BATCH_SIZE':batch_size,

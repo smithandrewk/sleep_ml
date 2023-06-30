@@ -26,7 +26,7 @@ parser.add_argument("-p", "--project", type=str, default='project',help="Project
 parser.add_argument("-f", "--fold", type=str, default=0,help="Fold from 0-15")
 args = parser.parse_args()
 
-fold = args.fold
+fold = int(args.fold)
 model = RecreatedMLP(input_size=210)
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = f'mlp_fold_{fold}'

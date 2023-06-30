@@ -326,3 +326,43 @@ def score_edf_lstm_aging(fileindex):
         os.system('mkdir aging_pred')
     df.to_csv(f'aging_pred/{fileindex}.csv',index=False)
     return df
+
+def optimization_loop(model,trainloader,devloader,criterion,optimizer,epochs,DEVICE=DEVICE):
+    loss_tr = []
+    loss_dev = []
+
+    pbar = tqdm(range(epochs))
+
+    for epoch in pbar:
+        loss_tr.append(training_loop(model,trainloader,criterion,optimizer,DEVICE))
+        loss_dev.append(development_loop(model,devloader,criterion,DEVICE))
+
+        pbar.set_description(f'\033[94m Train Loss: {loss_tr[-1]:.4f}\033[93m Dev Loss: {loss_dev[-1]:.4f}\033[0m')
+        plt.plot(loss_tr[-20:])
+        plt.plot(loss_dev[-20:])
+        plt.savefig('running_loss.jpg')
+        plt.close()
+
+def training_loop(model,trainloader,criterion,optimizer,DEVICE):
+    model.train()
+    loss_tr_total = 0
+    for (X_tr,y_tr) in trainloader:
+        X_tr,y_tr = X_tr.to(DEVICE),y_tr.to(DEVICE)
+        logits = model(X_tr)
+        loss = criterion(logits,y_tr)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        loss_tr_total += loss.item()
+    return loss_tr_total/len(trainloader)
+
+def development_loop(model,devloader,criterion,DEVICE):
+    model.eval()
+    with torch.no_grad():
+        loss_dev_total = 0
+        for (X_dv,y_dv) in devloader:
+            X_dv,y_dv = X_dv.to(DEVICE),y_dv.to(DEVICE)
+            logits = model(X_dv)
+            loss = criterion(logits,y_dv)
+            loss_dev_total += loss.item()
+        return loss_dev_total/len(devloader)

@@ -37,6 +37,35 @@ class MLP(nn.Module):
         x = self.fc4(x)
 
         return x
+
+class RecreatedMLP(nn.Module):
+    """
+    MLP according to Smith et. al
+    """
+    def __init__(self,input_size=210) -> None:
+        super().__init__()
+        self.fc1 = nn.Linear(input_size,512)
+
+        self.fc2 = nn.Linear(512,512)
+
+        self.fc3 = nn.Linear(512,512)
+
+        self.fc4 = nn.Linear(512,3)
+
+    def forward(self,x):
+        x = self.fc1(x)
+        x = relu(x)
+
+        x = self.fc2(x)
+        x = relu(x)
+
+        x = self.fc3(x)
+        x = relu(x)
+
+        x = self.fc4(x)
+
+        return x
+
 class CNN(nn.Module):
     def __init__(self) -> None:
         super().__init__()

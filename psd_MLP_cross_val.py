@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 """
 author: Andrew Smith
 date: Mar 21
@@ -15,7 +16,6 @@ from tqdm import tqdm
 from lib.utils import *
 from lib.models import *
 from lib.ekyn import *
-from torch.utils.data import TensorDataset,DataLoader
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -23,24 +23,28 @@ parser.add_argument('-r','--resume', action='store_true', help="when this flag i
 parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='project',help="Project directory name")
-parser.add_argument("-f", "--fold", type=int, default=0,help="Fold")
 args = parser.parse_args()
 
+fold = 0
+model = RecreatedMLP(input_size=210)
 current_date = str(datetime.now()).replace(' ','_')
-project_dir = args.project
-early_stopping = True
-patience = 50
+project_dir = f'mlp_fold_{fold}'
+patience = 20
 lr = 3e-4
 batch_size = 32
 
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 config = {
+    'MODEL':str(model),
     'BATCH_SIZE':batch_size,
     'EPOCHS':args.epochs,
     'RESUME':args.resume,
     'START_TIME':current_date,
     'LEARNING_RATE':lr,
-    'PATIENCE':patience
+    'PATIENCE':patience,
+    'BEST_DEV_LOSS':torch.inf,
+    'START_EPOCH':0,
+    'BEST_MODEL_EPOCH':0
 }
 
 if not os.path.isdir(project_dir):
@@ -48,18 +52,16 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-## load data
-X,y = load_psd_label_pairs_windowed(get_ekyn_ids())
-X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=.2,shuffle=True,random_state=0)
+folds = get_leave_one_out_cv_ids_for_ekyn()
+train_ids,test_ids = folds[fold]
+X_train,y_train = load_psd_label_pairs_windowed(train_ids)
 X_train,X_dev,y_train,y_dev = train_test_split(X_train,y_train,test_size=.25,shuffle=True,random_state=0)
 trainloader = DataLoader(TensorDataset(X_train,y_train),batch_size=32,shuffle=True)
 devloader = DataLoader(TensorDataset(X_dev,y_dev),batch_size=32,shuffle=True)
-testloader = DataLoader(TensorDataset(X_test,y_test),batch_size=32,shuffle=True)
+
 print(f'trainloader: {len(trainloader)} batches')
 print(f'devloader: {len(devloader)} batches')
-print(f'testloader: {len(testloader)} batches')
 
-model = MLP()
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
 print("Params: ",params)
 
@@ -74,64 +76,39 @@ if(config['RESUME']):
     with open(f'{project_dir}/config.json','r') as f:
         previous_config = json.load(f)
     config['START_EPOCH'] = previous_config['END_EPOCH'] + 1
-    config['best_dev_loss'] = previous_config['best_dev_loss']
-else:
-    config['START_EPOCH'] = 0
+    config['BEST_DEV_LOSS'] = previous_config['BEST_DEV_LOSS']
+    config['BEST_MODEL_EPOCH'] = previous_config['BEST_MODEL_EPOCH']
 
 config['END_EPOCH'] = config['START_EPOCH'] + config['EPOCHS'] - 1
 
 model.to(device)
 
 criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(),lr=lr)
 
 loss_tr = []
 loss_dev = []
-patiencei = 0
-best_model_index = 0
-pbar = tqdm(range(config['EPOCHS']))
-for epoch in pbar:
-    # train loop
-    model.train()
-    loss_tr_total = 0
-    for (X_tr,y_tr) in trainloader:
-        X_tr,y_tr = X_tr.to(device),y_tr.to(device)
-        logits = model(X_tr)
-        loss = criterion(logits,y_tr)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        loss_tr_total += loss.item()
-    loss_tr.append(loss_tr_total/len(trainloader))
 
-    with torch.no_grad():
-        loss_dev_total = 0
-        for (X_dv,y_dv) in devloader:
-            X_dv,y_dv = X_dv.to(device),y_dv.to(device)
-            logits = model(X_dv)
-            loss = criterion(logits,y_dv)
-            loss_dev_total += loss.item()
-        loss_dev.append(loss_dev_total/len(devloader))
-    if(early_stopping):
-        if(epoch == 0):
-            # first epoch
-            config['best_dev_loss'] = loss_dev[-1]
+unimproved_epochs = 0
+
+pbar = tqdm(range(config['EPOCHS']))
+
+for epoch in pbar:
+    loss_tr.append(training_loop(model,trainloader,criterion,optimizer,DEVICE))
+    loss_dev.append(development_loop(model,devloader,criterion,DEVICE))
+
+    if (patience != None):
+        if (loss_dev[-1] < config['BEST_DEV_LOSS']):
+            config['BEST_DEV_LOSS'] = loss_dev[-1]
+            config['BEST_MODEL_EPOCH'] = epoch
+            unimproved_epochs = 0
+            torch.save(model.state_dict(), f=f'{project_dir}/best_model.pt')
         else:
-            if(loss_dev[-1] < config['best_dev_loss']):
-                # new best loss
-                config['best_dev_loss'] = loss_dev[-1]
-                patiencei = 0
-                best_model_index = epoch
-                torch.save(model.state_dict(), f=f'{project_dir}/best_model.pt')
-                loss,metrics,y_true,y_pred,y_logits = evaluate(devloader,model,criterion,device)
-                cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/cm_best.jpg')
-            else:
-                patiencei += 1
-                if(patiencei == patience):
-                    print("early stopping")
-                    break
-    best = config['best_dev_loss']
-    pbar.set_description(f'\033[94m Train Loss: {loss_tr[-1]:.4f}\033[93m Dev Loss: {loss_dev[-1]:.4f}\033[92m Best Loss: {best:.4f} \033[91m Stopping: {patiencei}\033[0m')
+            unimproved_epochs += 1
+            if (unimproved_epochs >= patience): # early stopping
+                break
+
+    pbar.set_description(f'\033[94m Train Loss: {loss_tr[-1]:.4f}\033[93m Dev Loss: {loss_dev[-1]:.4f}\033[92m Best Loss: {config["BEST_DEV_LOSS"]:.4f} \033[91m Stopping: {unimproved_epochs}\033[0m')
 
 
     # plot recent loss
@@ -150,11 +127,11 @@ for epoch in pbar:
     # save on checkpoint
     torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/{epoch}.pt')
 
-loss,metrics,y_true,y_pred,y_logits = evaluate(devloader,model,criterion,device)
+_,_,y_true,y_pred,_ = evaluate(devloader,model,criterion,device)
 cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/{current_date}/cm_last_dev.jpg')
 
-torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/model.pt')
-torch.save(model.state_dict(), f=f'{project_dir}/model.pt')
+torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/last_model.pt')
+torch.save(model.state_dict(), f=f'{project_dir}/last_model.pt')
 
 # save config
 with open(f'{project_dir}/config.json', 'w') as f:

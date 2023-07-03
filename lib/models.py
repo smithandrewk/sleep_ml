@@ -37,8 +37,43 @@ class MLP(nn.Module):
         x = self.fc4(x)
 
         return x
+class RawMLP(nn.Module):
+    """
+    MLP according to Wang et. al (proposed as 
+    a baseline architecture for TSC)
+    """
+    def __init__(self,input_size=5000,hidden_sizes=(500,500,500)) -> None:
+        super().__init__()
+        self.d1 = nn.Dropout1d(p=.1)
+        self.fc1 = nn.Linear(input_size,hidden_sizes[0])
 
-class RecreatedMLP(nn.Module):
+        self.d2 = nn.Dropout1d(p=.2)
+        self.fc2 = nn.Linear(hidden_sizes[0],hidden_sizes[1])
+
+        self.d3 = nn.Dropout1d(p=.2)
+        self.fc3 = nn.Linear(hidden_sizes[1],hidden_sizes[2])
+
+        self.d4 = nn.Dropout1d(p=.3)
+        self.fc4 = nn.Linear(hidden_sizes[2],3)
+
+    def forward(self,x):
+        x = self.d1(x)
+        x = self.fc1(x)
+        x = relu(x)
+
+        x = self.d2(x)
+        x = self.fc2(x)
+        x = relu(x)
+
+        x = self.d3(x)
+        x = self.fc3(x)
+        x = relu(x)
+
+        x = self.d4(x)
+        x = self.fc4(x)
+
+        return x
+class RecreatedMLPPSD(nn.Module):
     """
     MLP according to Smith et. al
     """

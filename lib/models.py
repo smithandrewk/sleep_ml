@@ -159,7 +159,27 @@ class ResNet(nn.Module):
             return x
         else:
             return x.squeeze()
+class CustomResNet(nn.Module):
+    def __init__(self,n_features,device='cuda') -> None:
+        super().__init__()
+        self.n_features = n_features
+        self.block1 = ResidualBlock(1,32,n_features).to(device)
+        self.block2 = ResidualBlock(32,64,n_features).to(device)
+        self.block3 = ResidualBlock(64,64,n_features).to(device)
 
+        self.gap = nn.AvgPool1d(kernel_size=n_features)
+        self.fc1 = nn.Linear(in_features=64,out_features=3)
+    def forward(self,x,classification=True):
+        x = x.view(-1,1,self.n_features)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
+        x = self.gap(x)
+        if(classification):
+            x = self.fc1(x.squeeze())
+            return x
+        else:
+            return x.squeeze()
 class CNNLSTM(nn.Module):
     def __init__(self) -> None:
         super().__init__()

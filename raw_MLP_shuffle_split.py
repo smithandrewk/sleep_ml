@@ -67,8 +67,8 @@ print("Params: ",params)
 
 if(config['RESUME']):
     print("Resuming previous training")
-    if os.path.exists(f'{project_dir}/model.pt'):
-        model.load_state_dict(torch.load(f=f'{project_dir}/model.pt'))
+    if os.path.exists(f'{project_dir}/last_model.pt'):
+        model.load_state_dict(torch.load(f=f'{project_dir}/last_model.pt'))
     else:
         print("Model file does not exist.")
         print("Exiting because resume flag was given and model does not exist. Either remove resume flag or move model to directory.")

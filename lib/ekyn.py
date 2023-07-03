@@ -32,6 +32,16 @@ def load_one_hot_labels(id='A1-1', condition='Vehicle', DATA_PATH=DATA_PATH):
 def load_eeg_label_pair(id='A1-1', condition='Vehicle'):
     return (load_epoched_eeg(id=id, condition=condition), load_one_hot_labels(id=id, condition=condition))
 
+def load_eeg_label_pairs(ids):
+    X_train = Tensor()
+    y_train = Tensor()
+    for id in ids:
+        for condition in ['Vehicle', 'PF']:
+            Xi,yi = load_eeg_label_pair(id,condition)
+            X_train = cat([X_train, Xi])
+            y_train = cat([y_train, yi])
+    return X_train, y_train
+
 def get_k_fold_cv_ids_for_ekyn(k=4):
     """
     warning: only tested for k=4. might work for things that divide the number of subjects. probably doesn't work otherwise. -andrew.

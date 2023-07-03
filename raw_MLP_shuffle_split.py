@@ -94,8 +94,8 @@ unimproved_epochs = 0
 pbar = tqdm(range(config['EPOCHS']))
 
 for epoch in pbar:
-    loss_tr.append(training_loop(model,trainloader,criterion,optimizer,DEVICE))
-    loss_dev.append(development_loop(model,devloader,criterion,DEVICE))
+    loss_tr.append(training_loop(model,trainloader,criterion,optimizer,device))
+    loss_dev.append(development_loop(model,devloader,criterion,device))
 
     if (patience != None):
         if (loss_dev[-1] < config['BEST_DEV_LOSS']):

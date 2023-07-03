@@ -101,34 +101,6 @@ class RecreatedMLPPSD(nn.Module):
 
         return x
 
-class CNN(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.c1 = nn.Conv1d(1, 10, kernel_size=10, stride=1,bias=False)
-        self.c2 = nn.Conv1d(10, 10, kernel_size=8, stride=1,bias=False)
-        self.c3 = nn.Conv1d(10, 10, kernel_size=5, stride=1,bias=False)
-        self.fc1 = nn.Linear(6200,3)
-        self.do1 = nn.Dropout(p=0.9)
-
-    def forward(self,x):
-        x = x.view(-1,1,5000)
-
-        x = self.c1(x)
-        x = nn.functional.relu(x)
-        x = nn.functional.max_pool1d(x,kernel_size=2)
-
-        x = self.c2(x)
-        x = nn.functional.relu(x)
-        x = nn.functional.max_pool1d(x,kernel_size=2)
-
-        x = self.c3(x)
-        x = nn.functional.relu(x)
-        x = nn.functional.max_pool1d(x,kernel_size=2)
-
-        x = self.fc1(x.view(-1,6200))
-        x = self.do1(x)
-
-        return x
 class ResidualBlock(nn.Module):
     def __init__(self,in_feature_maps,out_feature_maps,n_features) -> None:
         super().__init__()

@@ -51,7 +51,7 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-X,y = load_eeg_label_pairs(ids=get_ekyn_ids()[:4])
+X,y = load_eeg_label_pairs(ids=get_ekyn_ids())
 X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=.2,shuffle=True,random_state=0)
 X_train,X_dev,y_train,y_dev = train_test_split(X_train,y_train,test_size=.25,shuffle=True,random_state=0)
 trainloader = DataLoader(TensorDataset(X_train,y_train),batch_size=32,shuffle=True)

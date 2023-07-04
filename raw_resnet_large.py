@@ -40,7 +40,7 @@ class CustomModel(nn.Module):
         self.block3 = ResidualBlock(64,64,n_features).to(device)
 
         self.gap = nn.AvgPool1d(kernel_size=n_features)
-        self.fc1 = nn.Linear(in_features=8,out_features=3)
+        self.fc1 = nn.Linear(in_features=64,out_features=3)
     def forward(self,x,classification=True):
         x = x.view(-1,1,self.n_features)
         x = self.block1(x)

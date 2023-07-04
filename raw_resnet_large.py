@@ -36,7 +36,7 @@ class CustomModel(nn.Module):
         super().__init__()
         self.n_features = n_features
         self.block1 = ResidualBlock(1,32,n_features).to(device)
-        self.block2 = ResidualBlock(64,64,n_features).to(device)
+        self.block2 = ResidualBlock(32,64,n_features).to(device)
         self.block3 = ResidualBlock(64,64,n_features).to(device)
 
         self.gap = nn.AvgPool1d(kernel_size=n_features)

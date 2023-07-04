@@ -27,11 +27,32 @@ args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = args.project
-patience = 50
+patience = 100
 lr = 3e-4
 batch_size = 32
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
-model = ResNet(n_features=5000,device=device)
+class CustomModel(nn.Module):
+    def __init__(self,n_features,device='cuda') -> None:
+        super().__init__()
+        self.n_features = n_features
+        self.block1 = ResidualBlock(1,32,n_features).to(device)
+        self.block2 = ResidualBlock(64,64,n_features).to(device)
+        self.block3 = ResidualBlock(64,64,n_features).to(device)
+
+        self.gap = nn.AvgPool1d(kernel_size=n_features)
+        self.fc1 = nn.Linear(in_features=8,out_features=3)
+    def forward(self,x,classification=True):
+        x = x.view(-1,1,self.n_features)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
+        x = self.gap(x)
+        if(classification):
+            x = self.fc1(x.squeeze())
+            return x
+        else:
+            return x.squeeze()
+model = CustomModel(n_features=5000,device=device)
 
 config = {
     'MODEL':str(model),
@@ -67,8 +88,8 @@ print("Params: ",params)
 
 if(config['RESUME']):
     print("Resuming previous training")
-    if os.path.exists(f'{project_dir}/model.pt'):
-        model.load_state_dict(torch.load(f=f'{project_dir}/model.pt'))
+    if os.path.exists(f'{project_dir}/last_model.pt'):
+        model.load_state_dict(torch.load(f=f'{project_dir}/last_model.pt'))
     else:
         print("Model file does not exist.")
         print("Exiting because resume flag was given and model does not exist. Either remove resume flag or move model to directory.")

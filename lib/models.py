@@ -160,21 +160,6 @@ class ResNet(nn.Module):
         else:
             return x.squeeze()
 
-class CNNLSTM(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.resnet = ResNet(5000).cuda()
-        self.lstm = nn.LSTM(3,16)
-        self.fc1 = nn.Linear(16,3)
-    def forward(self,x_2d):
-        x_2d = x_2d.view(-1,3,1,5000)
-        x = torch.Tensor().cuda()
-        for t in range(x_2d.size(1)):
-            x_i = self.resnet(x_2d[:,t,:,:])
-            x_i = x_i.view(-1,3)
-            out,_ = self.lstm(x_i)
-        x = self.fc1(out)        
-        return x
 class CNNBiLSTM(nn.Module):
     def __init__(self,device='cuda') -> None:
         super().__init__()

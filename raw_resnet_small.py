@@ -16,6 +16,7 @@ from tqdm import tqdm
 from lib.utils import *
 from lib.models import *
 from lib.ekyn import *
+from lib.datasets import Dataset2p0
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -72,16 +73,11 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-X,y = load_eeg_label_pairs(ids=get_ekyn_ids())
-X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=.2,shuffle=True,random_state=0)
-X_train,X_dev,y_train,y_dev = train_test_split(X_train,y_train,test_size=.25,shuffle=True,random_state=0)
-trainloader = DataLoader(TensorDataset(X_train,y_train),batch_size=32,shuffle=True)
-devloader = DataLoader(TensorDataset(X_dev,y_dev),batch_size=32,shuffle=True)
-testloader = DataLoader(TensorDataset(X_test,y_test),batch_size=32,shuffle=True)
+trainloader = DataLoader(Dataset2p0(dir='w1_ss/train',labels='w1_ss/y_train.pt'),batch_size=32,shuffle=True)
+devloader = DataLoader(Dataset2p0(dir='w1_ss/dev',labels='w1_ss/y_dev.pt'),batch_size=32,shuffle=True)
 
 print(f'trainloader: {len(trainloader)} batches')
 print(f'devloader: {len(devloader)} batches')
-print(f'testloader: {len(testloader)} batches')
 
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
 print("Params: ",params)

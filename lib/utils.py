@@ -70,10 +70,12 @@ def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
 
     return loss_total/len(dataloader),metrics(y_true,y_pred),y_true,y_pred,y_logits
 
-def window_epoched_signal(X,windowsize):
+def window_epoched_signal(X,windowsize,zero_padding=True):
     """
     only works for odd windows, puts label at center
     """
+    if(zero_padding):
+        X = torch.cat([torch.zeros(windowsize//2,5000),X,torch.zeros(windowsize//2,5000)])
     cat = [X[:-(windowsize-1)]]
     for i in range(1,(windowsize-1)):
         cat.append(X[i:i-(windowsize-1)])

@@ -32,7 +32,7 @@ lr = 3e-4
 batch_size = 32
 device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
 class CustomModel(nn.Module):
-    def __init__(self,n_features,device='cuda') -> None:
+    def __init__(self, n_features, device='cuda') -> None:
         super().__init__()
         self.n_features = n_features
         self.block1 = ResidualBlock(1,16,n_features).to(device)

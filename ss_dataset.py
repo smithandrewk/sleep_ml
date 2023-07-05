@@ -3,7 +3,7 @@ from lib.ekyn import *
 import json
 from tqdm import tqdm
 
-window_size = 1
+window_size = 3
 data_dir = f'w{window_size}_ss'
 
 normalize = False

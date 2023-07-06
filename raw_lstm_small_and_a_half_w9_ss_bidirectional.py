@@ -27,7 +27,7 @@ parser.add_argument("-p", "--project", type=str, default='project',help="Project
 args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
-project_dir = "lstm_w9_ss"
+project_dir = "lstm_w9_ss_bidirectional"
 PATIENCE = 100
 lr = 3e-4
 batch_size = 32
@@ -39,8 +39,8 @@ class Gandalf(nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.encoder = Frodo(n_features=5000,device=DEVICE).to(DEVICE)
-        self.lstm = nn.LSTM(16,32)
-        self.fc1 = nn.Linear(32,3)
+        self.lstm = nn.LSTM(16,32,bidirectional=True)
+        self.fc1 = nn.Linear(64,3)
     def forward(self,x_2d,classification=True):
         x_2d = x_2d.view(-1,9,1,5000)
         x = torch.Tensor().to(DEVICE)

@@ -138,7 +138,10 @@ class ResidualBlock(nn.Module):
         
         return x
 
-class ResNet(nn.Module):
+class Frodo(nn.Module):
+    """
+    the little wanderer
+    """
     def __init__(self,n_features,device='cuda') -> None:
         super().__init__()
         self.n_features = n_features
@@ -159,45 +162,28 @@ class ResNet(nn.Module):
             return x
         else:
             return x.squeeze()
-
-class CNNBiLSTM(nn.Module):
-    def __init__(self,device='cuda') -> None:
-        super().__init__()
-        self.resnet = ResNet().to(device)
-        self.lstm_forward = nn.LSTM(3,128)
-        self.lstm_backward = nn.LSTM(3,128)
-        self.do1 = nn.Dropout(p=.2)
-        self.fc1 = nn.Linear(256,3)
-    def forward(self,x_2d):
-        x_2d = x_2d.view(-1,9,1,5000)
-        for t in range(5):
-            x_i = self.resnet(x_2d[:,t,:,:])
-            x_i = x_i.view(-1,3)
-            f,_ = self.lstm_forward(x_i)
-        for t in range(5):
-            x_i = self.resnet(x_2d[:,-t,:,:])
-            x_i = x_i.view(-1,3)
-            b,_ = self.lstm_backward(x_i)
-        x = torch.cat([f,b],axis=1)
-        x = self.do1(x)
-        x = self.fc1(x)        
-        return x
-
-class BigPapa(nn.Module):
-    def __init__(self,device='cuda') -> None:
+        
+class Gandalf(nn.Module):
+    def __init__(self,device,windowsize) -> None:
         super().__init__()
         self.device = device
-        self.resnet = ResNet(5000).to(device)
-        self.lstm = nn.LSTM(input_size=16,hidden_size=8,batch_first=True,bidirectional=True)
-        self.fc1 = nn.Linear(2*8*9,3)
-    def forward(self,x):
-        x_t = x.view(-1,9,1,5000)
+        self.windowsize = windowsize
+        self.encoder = Frodo(n_features=5000,device=device).to(device)
+        self.lstm = nn.LSTM(16,32)
+        self.fc1 = nn.Linear(32,3)
+    def forward(self,x_2d,classification=True):
+        x_2d = x_2d.view(-1,self.windowsize,1,5000)
         x = torch.Tensor().to(self.device)
-        for t in range(x_t.size(1)):
-            x = torch.cat([x,self.resnet(x_t[:,t,:,:],classification=False).unsqueeze(1)],dim=1)
-        x,_ = self.lstm(x.view(-1,9,16))
-        x = self.fc1(x.reshape(-1,2*8*9))
+        for t in range(x_2d.size(1)):
+            xi = self.encoder(x_2d[:,t,:,:],classification=False)
+            x = torch.cat([x,xi.unsqueeze(0)],dim=0)
+        out,_ = self.lstm(x)
+        if(classification):
+            x = self.fc1(out[-1])
+        else:
+            x = out[-1]
         return x
+
 class UniformRandomClassifier():
     def __init__(self) -> None:
         pass
@@ -206,6 +192,7 @@ class UniformRandomClassifier():
     def predict(self,x):
         uniform_random_y_pred = torch.randint(0,3,(len(x),))
         return uniform_random_y_pred
+    
 class ProportionalRandomClassifier():
     def __init__(self) -> None:
         pass

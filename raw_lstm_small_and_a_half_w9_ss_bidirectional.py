@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 current_date = str(datetime.now()).replace(' ','_')
 project_dir = "lstm_w9_ss_bidirectional"
-PATIENCE = 100
+PATIENCE = 30
 lr = 3e-4
 batch_size = 32
 device = f'cuda:{args.device}' if torch.cuda.is_available() else "mps" if torch.has_mps else "cpu"

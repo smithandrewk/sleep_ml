@@ -2,13 +2,16 @@ from lib.utils import *
 from lib.ekyn import *
 import json
 from tqdm import tqdm
+import sys
 
-train_size = .95
 window_size = 1
-data_dir = f'w{window_size}_ss'
+fold = int(sys.argv[1])
+
+folds = get_leave_one_out_cv_ids_for_ekyn()
+ids,test_ids = folds[fold]
+data_dir = f'w{window_size}_cv_{fold}'
 
 normalize = False
-ids = get_ekyn_ids()
 
 os.makedirs(data_dir)
 os.makedirs(f'{data_dir}/train')
@@ -16,8 +19,7 @@ os.makedirs(f'{data_dir}/dev')
 os.makedirs(f'{data_dir}/test')
 
 config = {
-    'TRAIN_SIZE':train_size,
-    'NORMALIZED':normalize,
+    'NORMALIZED' : normalize,
 }
 
 with open(f'{data_dir}/config.json', 'w') as f:
@@ -33,6 +35,8 @@ x_test_i = 0
 for id in tqdm(ids):
     for condition in ['PF','Vehicle']:
         X,y = load_eeg_label_pair(id=id,condition=condition)
+        if window_size != 1:
+            X = window_epoched_signal(X,window_size)
         X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=.2,shuffle=True,random_state=0)
         X_train,X_dev,y_train,y_dev = train_test_split(X_train,y_train,test_size=.25,shuffle=True,random_state=0)
         for Xi in X_train:

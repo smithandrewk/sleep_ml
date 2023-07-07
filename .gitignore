@@ -16,6 +16,9 @@ project
 *.json
 *.tar
 *joblib
+*pgf
+*jpg
+*svg
 data_pt
 aging*
 windowed

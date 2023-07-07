@@ -16,6 +16,7 @@ from tqdm import tqdm
 from lib.utils import *
 from lib.models import *
 from lib.ekyn import *
+from lib.datasets import Dataset2p0
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -27,14 +28,36 @@ parser.add_argument("-f", "--fold", type=str, default=0,help="Fold from 0-15")
 args = parser.parse_args()
 
 fold = int(args.fold)
-model = RecreatedMLPPSD(input_size=210)
 current_date = str(datetime.now()).replace(' ','_')
-project_dir = f'mlp_fold_{fold}'
-patience = 20
+project_dir = f'raw_resnet_small_cv_fold_{fold}'
+patience = 30
 lr = 3e-4
 batch_size = 32
 
-DEVICE = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
+device = torch.device(f'cuda:{args.device}' if torch.cuda.is_available() else "cpu")
+class CustomModel(nn.Module):
+    def __init__(self,n_features,device='cuda') -> None:
+        super().__init__()
+        self.n_features = n_features
+        self.block1 = ResidualBlock(1,4,n_features).to(device)
+        self.block2 = ResidualBlock(4,8,n_features).to(device)
+        self.block3 = ResidualBlock(8,8,n_features).to(device)
+
+        self.gap = nn.AvgPool1d(kernel_size=n_features)
+        self.fc1 = nn.Linear(in_features=8,out_features=3)
+    def forward(self,x,classification=True):
+        x = x.view(-1,1,self.n_features)
+        x = self.block1(x)
+        x = self.block2(x)
+        x = self.block3(x)
+        x = self.gap(x)
+        if(classification):
+            x = self.fc1(x.squeeze())
+            return x
+        else:
+            return x.squeeze()
+model = CustomModel(n_features=5000,device=device)
+
 config = {
     'MODEL':str(model),
     'BATCH_SIZE':batch_size,
@@ -53,12 +76,8 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-folds = get_leave_one_out_cv_ids_for_ekyn()
-train_ids,test_ids = folds[fold]
-X_train,y_train = load_psd_label_pairs_windowed(train_ids)
-X_train,X_dev,y_train,y_dev = train_test_split(X_train,y_train,test_size=.25,shuffle=True,random_state=0)
-trainloader = DataLoader(TensorDataset(X_train,y_train),batch_size=32,shuffle=True)
-devloader = DataLoader(TensorDataset(X_dev,y_dev),batch_size=32,shuffle=True)
+trainloader = DataLoader(Dataset2p0(dir=f'w1_cv_{fold}/train',labels=f'w1_cv_{fold}/y_train.pt'),batch_size=32,shuffle=True)
+devloader = DataLoader(Dataset2p0(dir=f'w1_cv_{fold}/dev',labels=f'w1_cv_{fold}/y_dev.pt'),batch_size=32,shuffle=True)
 
 print(f'trainloader: {len(trainloader)} batches')
 print(f'devloader: {len(devloader)} batches')
@@ -68,8 +87,8 @@ print("Params: ",params)
 
 if(config['RESUME']):
     print("Resuming previous training")
-    if os.path.exists(f'{project_dir}/model.pt'):
-        model.load_state_dict(torch.load(f=f'{project_dir}/model.pt'))
+    if os.path.exists(f'{project_dir}/last_model.pt'):
+        model.load_state_dict(torch.load(f=f'{project_dir}/last_model.pt'))
     else:
         print("Model file does not exist.")
         print("Exiting because resume flag was given and model does not exist. Either remove resume flag or move model to directory.")
@@ -82,7 +101,7 @@ if(config['RESUME']):
 
 config['END_EPOCH'] = config['START_EPOCH'] + config['EPOCHS'] - 1
 
-model.to(DEVICE)
+model.to(device)
 
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(),lr=lr)
@@ -95,8 +114,8 @@ unimproved_epochs = 0
 pbar = tqdm(range(config['EPOCHS']))
 
 for epoch in pbar:
-    loss_tr.append(training_loop(model,trainloader,criterion,optimizer,DEVICE))
-    loss_dev.append(development_loop(model,devloader,criterion,DEVICE))
+    loss_tr.append(training_loop(model,trainloader,criterion,optimizer,device))
+    loss_dev.append(development_loop(model,devloader,criterion,device))
 
     if (patience != None):
         if (loss_dev[-1] < config['BEST_DEV_LOSS']):
@@ -128,7 +147,7 @@ for epoch in pbar:
     # save on checkpoint
     torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/{epoch}.pt')
 
-_,_,y_true,y_pred,_ = evaluate(devloader,model,criterion,DEVICE)
+_,_,y_true,y_pred,_ = evaluate(devloader,model,criterion,device)
 cm_grid(y_true=y_true,y_pred=y_pred,save_path=f'{project_dir}/{current_date}/cm_last_dev.jpg')
 
 torch.save(model.state_dict(), f=f'{project_dir}/{current_date}/last_model.pt')

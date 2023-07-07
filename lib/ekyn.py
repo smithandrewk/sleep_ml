@@ -80,7 +80,7 @@ def load_psd_label_pair(id='A1-1', condition='Vehicle'):
 def load_psd_label_pair_windowed(id='A1-1', condition='Vehicle',windowsize=5):
         Xi = load_psd(id, condition)
         Xi = cat([zeros(windowsize//2,42),Xi,zeros(windowsize//2,42)])
-        Xi = window_epoched_signal(Xi,windowsize=windowsize)
+        Xi = window_epoched_signal(Xi,windowsize=windowsize,zero_padding=False)
         return (Xi,load_one_hot_labels(id,condition))
 
 def load_psd_label_pairs(ids):

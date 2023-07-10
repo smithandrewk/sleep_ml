@@ -29,8 +29,11 @@ def load_labels(id='A1-1', condition='Vehicle', DATA_PATH=DATA_PATH):
 def load_one_hot_labels(id='A1-1', condition='Vehicle', DATA_PATH=DATA_PATH):
     return one_hot(load_labels(id, condition, DATA_PATH)).float()
 
-def load_eeg_label_pair(id='A1-1', condition='Vehicle'):
-    return (load_epoched_eeg(id=id, condition=condition), load_one_hot_labels(id=id, condition=condition))
+def load_eeg_label_pair(id='A1-1', condition='Vehicle',zero_pad=False,windowsize=9):
+    if(zero_pad):
+        return (cat([zeros(windowsize//2,5000),load_epoched_eeg(id=id, condition=condition),zeros(windowsize//2,5000)]), load_one_hot_labels(id=id, condition=condition))
+    else:
+        return (load_epoched_eeg(id=id, condition=condition), load_one_hot_labels(id=id, condition=condition))
 
 def load_eeg_label_pairs(ids):
     X_train = Tensor()

@@ -43,3 +43,13 @@ class Dataset2p0(Dataset):
         y = self.labels[idx]
 
         return (X,y)
+class Windowset(Dataset):
+    def __init__(self,X,y):
+        self.X = cat([zeros(4,5000),X,zeros(4,5000)])
+        self.y = y
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, idx):
+        return (self.X[idx:idx+9].flatten(),self.y[idx])

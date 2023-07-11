@@ -16,7 +16,7 @@ from tqdm import tqdm
 from lib.utils import *
 from lib.models import *
 from lib.ekyn import *
-from lib.datasets import Dataset2p0
+from lib.datasets import *
 
 # argparse
 parser = argparse.ArgumentParser(description='Training program')
@@ -73,8 +73,8 @@ if not os.path.isdir(project_dir):
 if not os.path.isdir(f'{project_dir}/{current_date}'):
     os.system(f'mkdir {project_dir}/{current_date}')
 
-trainloader = DataLoader(Dataset2p0(dir='w1_ss/train',labels='w1_ss/y_train.pt'),batch_size=32,shuffle=True)
-devloader = DataLoader(Dataset2p0(dir='w1_ss/dev',labels='w1_ss/y_dev.pt'),batch_size=32,shuffle=True)
+trainloader = DataLoader(dataset=ShuffleSplitDataset(),batch_size=32,shuffle=True)
+devloader = DataLoader(dataset=ShuffleSplitDataset(training=False),batch_size=32,shuffle=True)
 
 print(f'trainloader: {len(trainloader)} batches')
 print(f'devloader: {len(devloader)} batches')

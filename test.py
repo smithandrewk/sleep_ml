@@ -7,9 +7,11 @@ from lib.datasets import *
 
 # %%
 class Subjectset(Dataset):
-    def __init__(self,subjects):
+    def __init__(self,ids):
+        subjects = [load_eeg_label_pair(id=id,condition=condition,zero_pad=True,windowsize=9) for id in ids for condition in ['Vehicle','PF']]
         self.Xs = [subject[0] for subject in subjects]
         self.ys = [subject[1] for subject in subjects]
+        del subjects
     def __len__(self):
         return 8640*len(self.Xs)
 

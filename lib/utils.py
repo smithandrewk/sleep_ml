@@ -368,3 +368,21 @@ def development_loop(model,devloader,criterion,DEVICE):
             loss = criterion(logits,y_dv)
             loss_dev_total += loss.item()
         return loss_dev_total/len(devloader)
+    
+def optimization_loop_shuffle_split(model,dataloader,dataset,criterion,optimizer,epochs,DEVICE=DEVICE):
+    loss_tr = []
+    loss_dev = []
+
+    pbar = tqdm(range(epochs))
+
+    for epoch in pbar:
+        dataset.train()
+        loss_tr.append(training_loop(model,dataloader,criterion,optimizer,DEVICE))
+        dataset.dev()
+        loss_dev.append(development_loop(model,dataloader,criterion,DEVICE))
+
+        pbar.set_description(f'\033[94m Train Loss: {loss_tr[-1]:.4f}\033[93m Dev Loss: {loss_dev[-1]:.4f}\033[0m')
+        plt.plot(loss_tr[-20:])
+        plt.plot(loss_dev[-20:])
+        plt.savefig('running_loss.jpg')
+        plt.close()

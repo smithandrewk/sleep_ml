@@ -85,3 +85,14 @@ class ShuffleSplitDataset(Dataset):
         self.training = True
     def dev(self):
         self.training = False
+class SSDataset(Dataset):
+    def __init__(self,Xs,ys,idx) -> None:
+        super().__init__()
+        self.Xs = Xs
+        self.ys = ys
+        self.idx = idx
+    def __len__(self):
+        return len(self.idx)
+    def __getitem__(self, index):
+        index = self.idx[index]
+        return (self.Xs[index // 8640][(index % 8640) : (index % 8640) + 9].flatten(),self.ys[index // 8640][index % 8640])

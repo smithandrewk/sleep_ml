@@ -50,7 +50,45 @@ def metrics(y_true,y_pred):
         'recall':recall_score(y_true=y_true,y_pred=y_pred,average='macro'),
         'f1':f1_score(y_true=y_true,y_pred=y_pred,average='macro')
     }
-
+def fix_gaps(df):
+    df = df.reset_index(drop=True)
+    gaps = df[df['Start Time'].diff() > datetime.timedelta(seconds=10)]
+    if len(gaps) == 0:
+        return df
+    gap = gaps.iloc[0]
+    start = df.iloc[gap.name - 1,0]
+    end = df.iloc[gap.name,0]
+    upper = df.iloc[:gap.name]
+    lower = df.iloc[gap.name:]
+    start_ts = start.timestamp()
+    end_ts = end.timestamp()
+    number_of_epochs_to_add = int((end_ts-start_ts) // 10) - 1
+    for i in range(number_of_epochs_to_add):
+        upper = pd.concat([upper,pd.DataFrame([start + datetime.timedelta(seconds=(i+1)*10),'X'],index=df.columns).T])
+    return pd.concat([upper,fix_gaps(lower)]).reset_index(drop=True)
+def get_recording_start_stop_zdb(filename):
+    try:
+        conn = sqlite3.connect(filename)
+    except Error as e:
+        print(e)
+    cur = conn.cursor()
+    query = "SELECT value FROM internal_property WHERE key='RecordingStart'"
+    cur.execute(query)
+    result = cur.fetchall()
+    recording_start = int(result[0][0])
+    query = "SELECT value FROM internal_property WHERE key='RecordingStop'"
+    cur.execute(query)
+    result = cur.fetchall()
+    recording_stop = int(result[0][0])
+    length_ns = recording_stop - recording_start # ns
+    length_s = length_ns * 1e-7 # s
+    hh = length_s // 3600
+    mm = (length_s % 3600) // 60
+    ss = ((length_s % 3600) % 60)
+    print(hh,mm,ss,length_s)
+    print(recording_start)
+    print(recording_stop)
+    return recording_start,recording_stop
 def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
     with torch.no_grad():
         y_true = torch.Tensor()
@@ -348,7 +386,7 @@ def optimization_loop(model,trainloader,devloader,criterion,optimizer,epochs,DEV
 def training_loop(model,trainloader,criterion,optimizer,DEVICE):
     model.train()
     loss_tr_total = 0
-    for (X_tr,y_tr) in trainloader:
+    for (X_tr,y_tr) in tqdm(trainloader):
         X_tr,y_tr = X_tr.to(DEVICE),y_tr.to(DEVICE)
         logits = model(X_tr)
         loss = criterion(logits,y_tr)
@@ -362,7 +400,7 @@ def development_loop(model,devloader,criterion,DEVICE):
     model.eval()
     with torch.no_grad():
         loss_dev_total = 0
-        for (X_dv,y_dv) in devloader:
+        for (X_dv,y_dv) in tqdm(devloader):
             X_dv,y_dv = X_dv.to(DEVICE),y_dv.to(DEVICE)
             logits = model(X_dv)
             loss = criterion(logits,y_dv)

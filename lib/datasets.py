@@ -4,7 +4,7 @@ from torch import load
 import torch
 from lib.ekyn import load_eeg_label_pair,get_ekyn_ids
 from sklearn.model_selection import train_test_split
-
+from torch import cat,zeros
 class EEGDataset(Dataset):
     def __init__(self,dir,labels):
         self.labels = load(f'{labels}')

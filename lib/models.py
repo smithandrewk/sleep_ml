@@ -1,6 +1,7 @@
 from torch import nn
 from torch.nn.functional import relu
 import torch
+from lib.env import *
 class MLP(nn.Module):
     """
     MLP according to Wang et. al (proposed as 
@@ -164,16 +165,14 @@ class Frodo(nn.Module):
             return x.squeeze()
         
 class Gandalf(nn.Module):
-    def __init__(self,device,windowsize) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.device = device
-        self.windowsize = windowsize
-        self.encoder = Frodo(n_features=5000,device=device).to(device)
-        self.lstm = nn.LSTM(16,32)
-        self.fc1 = nn.Linear(32,3)
+        self.encoder = Frodo(n_features=5000,device=DEVICE).to(DEVICE)
+        self.lstm = nn.LSTM(16,32,bidirectional=True)
+        self.fc1 = nn.Linear(64,3)
     def forward(self,x_2d,classification=True):
-        x_2d = x_2d.view(-1,self.windowsize,1,5000)
-        x = torch.Tensor().to(self.device)
+        x_2d = x_2d.view(-1,9,1,5000)
+        x = torch.Tensor().to(DEVICE)
         for t in range(x_2d.size(1)):
             xi = self.encoder(x_2d[:,t,:,:],classification=False)
             x = torch.cat([x,xi.unsqueeze(0)],dim=0)

@@ -17,7 +17,14 @@ from sklearn.metrics import f1_score,recall_score,precision_score,confusion_matr
 import json
 import os
 from lib.env import *
+import datetime
+from torch.nn.functional import one_hot
+from pandas import Categorical
+from pandas import NA
+from torch import from_numpy
 
+def get_courtney_ids():
+    return [filename.split(' ')[1] for filename in os.listdir(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/')]
 def load_raw_edf_by_path(path):
     raw = read_raw_edf(path,verbose=False)
     raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
@@ -95,7 +102,7 @@ def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
         y_pred = torch.Tensor()
         y_logits = torch.Tensor()
         loss_total = 0
-        for (Xi,yi) in dataloader:
+        for (Xi,yi) in tqdm(dataloader):
             y_true = torch.cat([y_true,yi.argmax(axis=1)])
 
             Xi,yi = Xi.to(DEVICE),yi.to(DEVICE)
@@ -207,6 +214,11 @@ def remove_outliers_from_eeg(eeg):
     return eeg_no_outliers
 
 def get_bout_statistics_for_predictions(pred):
+    if pred.dtype is torch.float32:
+        pred = pd.DataFrame(pred)
+        pred.loc[pred[0] == 2,0] = 'W'
+        pred.loc[pred[0] == 1,0] = 'S'
+        pred.loc[pred[0] == 0,0] = 'P'
     bout_lengths = {
     'P':[],
     'S':[],
@@ -424,3 +436,25 @@ def optimization_loop_shuffle_split(model,dataloader,dataset,criterion,optimizer
         plt.plot(loss_dev[-20:])
         plt.savefig('running_loss.jpg')
         plt.close()
+def load_courtney(filename):
+    fs = 500
+    raw = read_raw_edf((f'../data/courtney_aug_oct_2022_baseline_recordings/1_raw_edf/{filename}.edf'),verbose=False)
+    measurement_date = raw.info["meas_date"]
+    eeg = raw.get_data(picks='EEG 1')[0]
+    df = pd.read_excel(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/CW {filename} Baseline.xls')
+    df = df.drop(0).reset_index(drop=True)
+    df = fix_gaps(df)
+    df.loc[df['Label'] == 'X','Label'] = NA
+    df = df.fillna(method='ffill')
+    start_time = df['Start Time'][0]
+    end_time = df.iloc[-1,0]
+    length = (end_time - start_time)
+    times = [start_time + datetime.timedelta(seconds=10*i) for  i in range(int((length.days*86400 + length.seconds)/10)+1)]
+    eeg = raw.get_data(picks='EEG 1')[0]
+    measurement_date = measurement_date.replace(tzinfo=None)
+    offset = df.iloc[0,0] - measurement_date
+    eeg = eeg[offset.seconds*500:]
+    eeg = eeg[:len(times)*5000]
+    eeg = from_numpy(eeg.reshape(-1, 5000)).float()
+    y = one_hot(from_numpy(Categorical(df['Label']).codes.copy()).long()).float()
+    return eeg,y

@@ -14,6 +14,7 @@ project
 *.pt
 *.csv 
 *.json
+*zip
 *.tar
 *joblib
 *pgf

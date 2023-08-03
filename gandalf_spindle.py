@@ -6,7 +6,6 @@ description:
 """
 import json
 import argparse
-from datetime import datetime
 import os
 
 import matplotlib.pyplot as plt
@@ -23,11 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-from lib.utils import *
-from lib.models import *
-from lib.ekyn import *
-from lib.env import *
-from lib.datasets import *
+
 def load_spindle_eeg_label_pair(cohort='A',subject='1'):
     if cohort == 'C':
         fs = 200
@@ -81,7 +76,7 @@ parser.add_argument("-f", "--fold", type=str, default=0,help="Fold from 0-15")
 args = parser.parse_args()
 
 FOLD = int(args.fold)
-current_date = str(datetime.now()).replace(' ','_')
+current_date = str(datetime.datetime.now()).replace(' ','_')
 project_dir = f'gandalf_spindle'
 PATIENCE = 30
 lr = 3e-4

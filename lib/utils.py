@@ -464,11 +464,11 @@ def load_spindle_eeg_label_pair(cohort='A',subject='1'):
         fs = 200
     else:
         fs = 128
-    raw = read_raw_edf(f'./data/Cohort{cohort}/recordings/{cohort}{subject}.edf')
+    raw = read_raw_edf(f'../data/spindle/Cohort{cohort}/recordings/{cohort}{subject}.edf')
     eeg = raw.get_data('EEG1').squeeze()
     eeg = resample(eeg,86400*500)
     X = torch.from_numpy(eeg.reshape(-1,5000)).float()
-    df = pd.read_csv(f'data/Cohort{cohort}/scorings/{cohort}{subject}.csv',header=None)
+    df = pd.read_csv(f'../data/spindle/Cohort{cohort}/scorings/{cohort}{subject}.csv',header=None)
     cat = pd.Categorical(df[1])
     cats = cat.categories
     labels = np.array([[a]*2000 for a in list(cat.codes)]).flatten()

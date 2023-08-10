@@ -21,7 +21,8 @@ import datetime
 from torch.nn.functional import one_hot
 from pandas import Categorical
 from pandas import NA
-from torch import from_numpy
+from torch import from_numpy,zeros
+from scipy.signal import resample
 
 def get_courtney_ids():
     return [filename.split(' ')[1] for filename in os.listdir(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/')]
@@ -458,3 +459,47 @@ def load_courtney(filename):
     eeg = from_numpy(eeg.reshape(-1, 5000)).float()
     y = one_hot(from_numpy(Categorical(df['Label']).codes.copy()).long()).float()
     return eeg,y
+def load_spindle_eeg_label_pair(cohort='A',subject='1'):
+    if cohort == 'C':
+        fs = 200
+    else:
+        fs = 128
+    raw = read_raw_edf(f'./data/Cohort{cohort}/recordings/{cohort}{subject}.edf')
+    eeg = raw.get_data('EEG1').squeeze()
+    eeg = resample(eeg,86400*500)
+    X = torch.from_numpy(eeg.reshape(-1,5000)).float()
+    df = pd.read_csv(f'data/Cohort{cohort}/scorings/{cohort}{subject}.csv',header=None)
+    cat = pd.Categorical(df[1])
+    cats = cat.categories
+    labels = np.array([[a]*2000 for a in list(cat.codes)]).flatten()
+    y = torch.from_numpy(labels.reshape(-1,5000)).mode(dim=1).values
+    if f'{cohort}{subject}' in ['D1','D2','D3','C1','C2','C3','C4','C5','C6']:
+        # ['1', 'n', 'r', 'w']
+        y[torch.where(y == 0)[0]] = 3
+        y[torch.where(y == 2)[0]] = 0
+        y[torch.where(y == 3)[0]] = 2
+    elif f'{cohort}{subject}' in ['D4','D5','D6']:
+        # ['n', 'r', 'w']
+        y[torch.where(y == 1)[0]] = 3
+        y[torch.where(y == 0)[0]] = 1
+        y[torch.where(y == 3)[0]] = 0
+    elif f'{cohort}{subject}' in ['A2','B1']:
+        # ['1', '2', '3', 'a', 'n', 'r', 'w']
+        y[torch.where(y == 0)[0]] = 6
+        y[torch.where(y == 1)[0]] = 4
+        y[torch.where(y == 2)[0]] = 5
+        y[torch.where(y == 3)[0]] = 5
+        y[torch.where(y == 4)[0]] = 1
+        y[torch.where(y == 5)[0]] = 0
+        y[torch.where(y == 6)[0]] = 2
+    else:
+        # ['1', '2', '3', 'n', 'r', 'w']
+        y[torch.where(y == 0)[0]] = 5
+        y[torch.where(y == 1)[0]] = 3
+        y[torch.where(y == 2)[0]] = 4
+        y[torch.where(y == 3)[0]] = 1
+        y[torch.where(y == 4)[0]] = 0
+        y[torch.where(y == 5)[0]] = 2
+    y = torch.nn.functional.one_hot(y.long()).float()
+    X = torch.cat([zeros(9//2,5000),X,zeros(9//2,5000)])
+    return X,y

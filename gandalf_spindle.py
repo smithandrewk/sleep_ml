@@ -93,7 +93,7 @@ subjects = [load_spindle_eeg_label_pair(cohort=id[0],subject=id[1]) for id in [t
 Xs = [subject[0] for subject in subjects]
 ys = [subject[1] for subject in subjects]
 devloader = DataLoader(dataset=SSDataset(Xs,ys,range(8640)),batch_size=32,shuffle=False)
-
+print(ids,test_id)
 print(f'trainloader: {len(trainloader)} batches')
 print(f'devloader: {len(devloader)} batches')
 

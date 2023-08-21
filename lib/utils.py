@@ -473,7 +473,7 @@ def load_spindle_eeg_label_pair(cohort='A',subject='1'):
     cats = cat.categories
     labels = np.array([[a]*2000 for a in list(cat.codes)]).flatten()
     y = torch.from_numpy(labels.reshape(-1,5000)).mode(dim=1).values
-    if f'{cohort}{subject}' in ['D1','D2','D3','C1','C2','C3','C4','C5','C6']:
+    if f'{cohort}{subject}' in ['D1','D2','D3','C1','C2','C3','C4','C5','C6','C7','C8']:
         # ['1', 'n', 'r', 'w']
         y[torch.where(y == 0)[0]] = 3
         y[torch.where(y == 2)[0]] = 0

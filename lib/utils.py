@@ -26,6 +26,7 @@ from scipy.signal import resample
 
 def get_courtney_ids():
     return [filename.split(' ')[1] for filename in os.listdir(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/')]
+    
 def load_raw_edf_by_path(path):
     raw = read_raw_edf(path,verbose=False)
     raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})

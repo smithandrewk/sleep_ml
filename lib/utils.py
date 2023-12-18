@@ -504,3 +504,29 @@ def load_spindle_eeg_label_pair(cohort='A',subject='1'):
     y = torch.nn.functional.one_hot(y.long()).float()
     X = torch.cat([zeros(9//2,5000),X,zeros(9//2,5000)])
     return X,y
+import matplotlib.pyplot as plt
+
+def plot_eeg_and_labels(X,y,start=0,duration=20):
+    import matplotlib.patches as patches
+
+    fig, ax = plt.subplots(figsize=(16,5),dpi=200)
+
+    plt.plot(X[start:start+duration].flatten(),'black',linewidth=.2)
+
+    colors = ['red','green','blue']
+    epochs = []
+    for i in range(duration):
+        stage = int(y[start+i])
+        ax.fill_between([i*5000, (i+1)*5000], y1=-.0003, y2=.0003, color=colors[stage], alpha=0.3)
+        epochs.append(i*5000+2500)
+
+    red_patch = patches.Patch(color='red', alpha=0.5, label='Paradoxical')
+    green_patch = patches.Patch(color='green', alpha=0.5, label='Slow-wave')
+    blue_patch = patches.Patch(color='blue', alpha=0.5, label='Wakefulness')
+    plt.ylim([-.0003,.0003])
+    plt.margins(0,0)
+    ax.legend(handles=[red_patch, green_patch,blue_patch],loc='upper left', bbox_to_anchor=(1.04, 1),
+            fancybox=True, shadow=True, ncol=1)
+    plt.xlabel('epoch (index)')
+    plt.ylabel('potential energy (Volts)')
+    plt.xticks(epochs[::int(duration/20)],range(duration)[::int(duration/20)]);

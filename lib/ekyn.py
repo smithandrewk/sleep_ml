@@ -36,14 +36,16 @@ def load_eeg_label_pair(id='A1-1', condition='Vehicle',zero_pad=False,windowsize
         return (load_epoched_eeg(id=id, condition=condition), load_one_hot_labels(id=id, condition=condition))
 
 def load_eeg_label_pairs(ids):
-    X_train = Tensor()
-    y_train = Tensor()
+    X = []
+    y = []
     for id in ids:
         for condition in ['Vehicle', 'PF']:
             Xi,yi = load_eeg_label_pair(id,condition)
-            X_train = cat([X_train, Xi])
-            y_train = cat([y_train, yi])
-    return X_train, y_train
+            X.append(Xi)
+            y.append(yi)
+    X = cat(X)
+    y = cat(y)
+    return X,y
 
 def get_k_fold_cv_ids_for_ekyn(k=4):
     """

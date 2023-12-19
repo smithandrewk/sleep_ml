@@ -99,6 +99,8 @@ def get_recording_start_stop_zdb(filename):
     print(recording_stop)
     return recording_start,recording_stop
 def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
+    model.eval()
+    model.to(DEVICE)
     with torch.no_grad():
         y_true = torch.Tensor()
         y_pred = torch.Tensor()
@@ -114,7 +116,7 @@ def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
             
             y_logits = torch.cat([y_logits,torch.softmax(logits,dim=1).detach().cpu()])
             y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu()])
-
+    model.train()
     return loss_total/len(dataloader),metrics(y_true,y_pred),y_true,y_pred,y_logits
 
 def window_epoched_signal(X,windowsize,zero_padding=True):

@@ -32,20 +32,7 @@ class WindowedEEGDataset(Dataset):
         X,y = torch.load(f'{self.dir}/{id}.pt')
 
         return (X,y)
-class Dataset2p0(Dataset):
-    def __init__(self,dir,labels):
-        self.labels = load(f'{labels}')
-        self.dir = dir
 
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, idx):
-        path = join(self.dir, str(idx)+".pt")
-        X = load(path)
-        y = self.labels[idx]
-
-        return (X,y)
 class Windowset(Dataset):
     def __init__(self,X,y):
         self.X = cat([zeros(4,5000),X,zeros(4,5000)])

@@ -399,29 +399,44 @@ def optimization_loop(model,trainloader,devloader,criterion,optimizer,epochs,DEV
         plt.savefig('running_loss.jpg')
         plt.close()
 
-def training_loop(model,trainloader,criterion,optimizer,DEVICE):
+def training_loop(model,trainloader,criterion,optimizer,device):
     model.train()
+    model.to(device)
+    y_true = []
+    y_pred = []
     loss_tr_total = 0
-    for (X_tr,y_tr) in tqdm(trainloader):
-        X_tr,y_tr = X_tr.to(DEVICE),y_tr.to(DEVICE)
+    for (X_tr,y_tr) in tqdm(trainloader,leave=False):
+        y_true.append(y_tr.argmax(axis=1).cpu())
+        X_tr,y_tr = X_tr.to(device),y_tr.to(device)
         logits = model(X_tr)
         loss = criterion(logits,y_tr)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         loss_tr_total += loss.item()
-    return loss_tr_total/len(trainloader)
+        y_pred.append(torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu())
+    y_true = torch.cat(y_true)
+    y_pred = torch.cat(y_pred)
+    return loss_tr_total/len(trainloader),f1_score(y_true,y_pred,average='macro')
 
-def development_loop(model,devloader,criterion,DEVICE):
+def development_loop(model,devloader,criterion,device):
+    model.to(device)
     model.eval()
     with torch.no_grad():
+        y_true = []
+        y_pred = []
         loss_dev_total = 0
-        for (X_dv,y_dv) in tqdm(devloader):
-            X_dv,y_dv = X_dv.to(DEVICE),y_dv.to(DEVICE)
+        for (X_dv,y_dv) in tqdm(devloader,leave=False):
+            y_true.append(y_dv.argmax(axis=1).cpu())
+            X_dv,y_dv = X_dv.to(device),y_dv.to(device)
             logits = model(X_dv)
             loss = criterion(logits,y_dv)
             loss_dev_total += loss.item()
-        return loss_dev_total/len(devloader)
+            y_pred.append(torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu())
+        y_true = torch.cat(y_true)
+        y_pred = torch.cat(y_pred)
+
+        return loss_dev_total/len(devloader),f1_score(y_true,y_pred,average='macro')
     
 def optimization_loop_shuffle_split(model,dataloader,dataset,criterion,optimizer,epochs,DEVICE=DEVICE):
     loss_tr = []
@@ -532,3 +547,18 @@ def plot_eeg_and_labels(X,y,start=0,duration=20):
     plt.xlabel('epoch (index)')
     plt.ylabel('potential energy (Volts)')
     plt.xticks(epochs[::int(duration/20)],range(duration)[::int(duration/20)]);
+
+from torch import cat
+from torch.utils.data import Dataset
+
+class Windowset(Dataset):
+    def __init__(self,X,y,windowsize):
+        self.windowsize = windowsize
+        self.X = cat([zeros(windowsize // 2,5000),X,zeros(windowsize // 2,5000)])
+        self.y = y
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, idx):
+        return (self.X[idx:idx+self.windowsize].flatten(),self.y[idx])

@@ -170,24 +170,116 @@ class ProportionalRandomClassifier():
         proportional_random_y_pred = proportional_random_y_pred - 2
         proportional_random_y_pred = proportional_random_y_pred.long()
         return proportional_random_y_pred
-class ResNetSmall(nn.Module):
-    def __init__(self,n_features,device='cuda') -> None:
+        
+class ResidualBlockv2(nn.Module):
+    def __init__(self,n_features,in_feature_maps,out_feature_maps) -> None:
         super().__init__()
-        self.n_features = n_features
-        self.block1 = ResidualBlock(1,4,n_features).to(device)
-        self.block2 = ResidualBlock(4,8,n_features).to(device)
-        self.block3 = ResidualBlock(8,8,n_features).to(device)
+        self.in_feature_maps = in_feature_maps
+        self.out_feature_maps = out_feature_maps
+        if in_feature_maps != out_feature_maps:
+            self.c1 = nn.Conv1d(in_channels=in_feature_maps,out_channels=out_feature_maps,kernel_size=3,stride=2,padding=1)
+        else:
+            self.c1 = nn.Conv1d(in_channels=in_feature_maps,out_channels=out_feature_maps,kernel_size=3,padding='same')
+        self.ln1 = nn.LayerNorm(normalized_shape=(n_features))
+        self.c2 = nn.Conv1d(in_channels=out_feature_maps,out_channels=out_feature_maps,kernel_size=3,padding='same')
+        self.ln2 = nn.LayerNorm(normalized_shape=(n_features))
 
-        self.gap = nn.AvgPool1d(kernel_size=n_features)
-        self.fc1 = nn.Linear(in_features=8,out_features=3)
-    def forward(self,x,classification=True):
-        x = x.view(-1,1,self.n_features)
+        self.downsample = nn.Conv1d(in_channels=in_feature_maps,out_channels=out_feature_maps,kernel_size=1,stride=2)
+    def forward(self,x):
+        identity = x
+        x = self.c1(x)
+        x = self.ln1(x)
+        x = relu(x)
+        x = self.c2(x)
+        x = self.ln2(x)
+        x = relu(x)
+        if self.in_feature_maps != self.out_feature_maps:
+            x = x + self.downsample(identity)
+        else:
+            x = x + identity
+        return x
+import math
+class ResNetv2(nn.Module):
+    def __init__(self, windowsize, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.windowsize = windowsize * 5000
+        starting_filters = 8
+
+        self.c1 = nn.Conv1d(in_channels=1,out_channels=starting_filters,kernel_size=128,stride=2,padding=int(128//2) - 1)
+        self.ln1 = nn.LayerNorm(normalized_shape=(int(self.windowsize/2)))
+        self.mp1 = nn.MaxPool1d(kernel_size=2,stride=2)
+
+        self.block1 = ResidualBlockv2(n_features=int(self.windowsize/4),in_feature_maps=starting_filters,out_feature_maps=starting_filters)        
+        self.block2 = ResidualBlockv2(n_features=int(self.windowsize/4),in_feature_maps=starting_filters,out_feature_maps=starting_filters)        
+
+        self.block3 = ResidualBlockv2(n_features=int(self.windowsize/8),in_feature_maps=starting_filters,out_feature_maps=starting_filters*2)        
+        self.block4 = ResidualBlockv2(n_features=int(self.windowsize/8),in_feature_maps=starting_filters*2,out_feature_maps=starting_filters*2)        
+
+        self.block5 = ResidualBlockv2(n_features=math.ceil(self.windowsize/16),in_feature_maps=starting_filters*2,out_feature_maps=starting_filters*4)        
+        self.block6 = ResidualBlockv2(n_features=math.ceil(self.windowsize/16),in_feature_maps=starting_filters*4,out_feature_maps=starting_filters*4)   
+
+        self.classifier = nn.Sequential(
+            nn.AvgPool1d(kernel_size=math.ceil(self.windowsize/16)),
+            nn.Flatten(start_dim=1),
+            nn.Linear(starting_filters*4,3),
+            # nn.ReLU(),
+            # nn.Linear(32,3)
+        )
+    def forward(self,x):
+        x = x.reshape(-1,1,self.windowsize)
+        x = self.c1(x)
+        x = self.ln1(x)
+        x = relu(x)
+        x = self.mp1(x)
+
         x = self.block1(x)
         x = self.block2(x)
+
         x = self.block3(x)
-        x = self.gap(x)
-        if(classification):
-            x = self.fc1(x.squeeze())
-            return x
-        else:
-            return x.squeeze()
+        x = self.block4(x)
+
+        x = self.block5(x)
+        x = self.block6(x)
+
+        x = self.classifier(x)
+        return x
+    
+class ResNetv3(nn.Module):
+    def __init__(self, windowsize=1, starting_filters=8, n_blocks=3, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.windowsize = windowsize * 5000
+        self.starting_filters = starting_filters
+        
+        self.c1 = nn.Conv1d(in_channels=1,out_channels=starting_filters,kernel_size=128,stride=2,padding=int(128//2) - 1)
+        self.ln1 = nn.LayerNorm(normalized_shape=(int(self.windowsize/2)))
+        self.mp1 = nn.MaxPool1d(kernel_size=2,stride=2)
+
+        blocks = [
+            ResidualBlockv2(n_features=math.ceil(self.windowsize/4),in_feature_maps=starting_filters,out_feature_maps=starting_filters),
+            ResidualBlockv2(n_features=math.ceil(self.windowsize/4),in_feature_maps=starting_filters,out_feature_maps=starting_filters)
+        ]
+        print("nblocks",n_blocks)
+        for i in range(1,n_blocks):
+            blocks.append(ResidualBlockv2(n_features=math.ceil(self.windowsize/(2**(2+i))),in_feature_maps=starting_filters*(2**(i-1)),out_feature_maps=starting_filters*(2**(i))))
+            blocks.append(ResidualBlockv2(n_features=math.ceil(self.windowsize/(2**(2+i))),in_feature_maps=starting_filters*(2**(i)),out_feature_maps=starting_filters*(2**(i))))
+
+        self.blocks = nn.Sequential(*blocks)
+        print(self.blocks)
+        self.classifier = nn.Sequential(
+            nn.AvgPool1d(kernel_size=math.ceil(self.windowsize/(2**(2+n_blocks-1)))),
+            nn.Flatten(start_dim=1),
+            nn.Linear(starting_filters*(2**(n_blocks-1)),3),
+            # nn.ReLU(),
+            # nn.Linear(32,3)
+        )
+    def forward(self,x):
+        x = x.reshape(-1,1,self.windowsize)
+        x = self.c1(x)
+        x = self.ln1(x)
+        x = relu(x)
+        x = self.mp1(x)
+
+        x = self.blocks(x)
+
+        x = self.classifier(x)
+        return x

@@ -51,6 +51,17 @@ PROJECT_DIR = f'../projects/{args.project}'
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
+class Windowset(Dataset):
+    def __init__(self,X,y,windowsize):
+        self.windowsize = windowsize
+        self.X = cat([zeros(windowsize // 2,5000),X,zeros(windowsize // 2,5000)])
+        self.y = y
+
+    def __len__(self):
+        return len(self.y)
+
+    def __getitem__(self, idx):
+        return (self.X[idx:idx+self.windowsize],self.y[idx])
 import random
 torch.manual_seed(0)
 np.random.seed(0)
@@ -68,8 +79,17 @@ trainloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuf
 X,y = load_eeg_label_pairs(ids=test_idx)
 devloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
 
-from lib.models import ResNetv2
-model = ResNetv2(windowsize=CONFIG['WINDOWSIZE'])
+class MyLSTM(nn.Module):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.lstm = nn.LSTM(input_size=5000,hidden_size=32,batch_first=True)
+        self.classifier = nn.Linear(in_features=32,out_features=3)
+    def forward(self,x):
+        _,(h,_) = self.lstm(x)
+        x = self.classifier(h.squeeze())
+        return x
+model = MyLSTM()
+
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 print("Params: ", sum([p.flatten().size()[0] for p in list(model.parameters())]))

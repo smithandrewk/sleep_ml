@@ -78,13 +78,16 @@ X,y = load_eeg_label_pairs(ids=train_idx)
 trainloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
 X,y = load_eeg_label_pairs(ids=test_idx)
 devloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
+from lib import models
 
 class MyLSTM(nn.Module):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.lstm = nn.LSTM(input_size=5000,hidden_size=32,batch_first=True)
+        self.encoder = models.ResNetv3(windowsize=1,starting_filters=2,n_blocks=2)
+        self.lstm = nn.LSTM(input_size=4,hidden_size=32,batch_first=True)
         self.classifier = nn.Linear(in_features=32,out_features=3)
     def forward(self,x):
+        x = self.encoder(x).reshape(-1,3,4)
         _,(h,_) = self.lstm(x)
         x = self.classifier(h.squeeze())
         return x

@@ -268,7 +268,7 @@ class ResNetv3(nn.Module):
         self.classifier = nn.Sequential(
             nn.AvgPool1d(kernel_size=math.ceil(self.windowsize/(2**(2+n_blocks-1)))),
             nn.Flatten(start_dim=1),
-            nn.Linear(starting_filters*(2**(n_blocks-1)),3),
+            # nn.Linear(starting_filters*(2**(n_blocks-1)),3),
             # nn.ReLU(),
             # nn.Linear(32,3)
         )

@@ -250,7 +250,7 @@ class ResNetv3(nn.Module):
         self.windowsize = windowsize * 5000
         self.starting_filters = starting_filters
         
-        self.c1 = nn.Conv1d(in_channels=1,out_channels=starting_filters,kernel_size=128,stride=2,padding=int(128//2) - 1)
+        self.c1 = nn.Conv1d(in_channels=1,out_channels=starting_filters,kernel_size=10,stride=2,padding=4)
         self.ln1 = nn.LayerNorm(normalized_shape=(int(self.windowsize/2)))
         self.mp1 = nn.MaxPool1d(kernel_size=2,stride=2)
 
@@ -258,17 +258,16 @@ class ResNetv3(nn.Module):
             ResidualBlockv2(n_features=math.ceil(self.windowsize/4),in_feature_maps=starting_filters,out_feature_maps=starting_filters),
             ResidualBlockv2(n_features=math.ceil(self.windowsize/4),in_feature_maps=starting_filters,out_feature_maps=starting_filters)
         ]
-        print("nblocks",n_blocks)
+        
         for i in range(1,n_blocks):
             blocks.append(ResidualBlockv2(n_features=math.ceil(self.windowsize/(2**(2+i))),in_feature_maps=starting_filters*(2**(i-1)),out_feature_maps=starting_filters*(2**(i))))
             blocks.append(ResidualBlockv2(n_features=math.ceil(self.windowsize/(2**(2+i))),in_feature_maps=starting_filters*(2**(i)),out_feature_maps=starting_filters*(2**(i))))
 
         self.blocks = nn.Sequential(*blocks)
-        print(self.blocks)
         self.classifier = nn.Sequential(
             nn.AvgPool1d(kernel_size=math.ceil(self.windowsize/(2**(2+n_blocks-1)))),
             nn.Flatten(start_dim=1),
-            # nn.Linear(starting_filters*(2**(n_blocks-1)),3),
+            nn.Linear(starting_filters*(2**(n_blocks-1)),3),
             # nn.ReLU(),
             # nn.Linear(32,3)
         )

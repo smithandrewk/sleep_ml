@@ -1,17 +1,22 @@
 from lib.utils import *
 from lib.models import *
 from lib.env import *
+from lib.ekyn import *
 
 import torch
 from tqdm import tqdm
-from torch.utils.data import DataLoader,TensorDataset
-from torch import cat,zeros
+from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import argparse
 import os
 import json
 import datetime
+import random
+
+torch.manual_seed(0)
+np.random.seed(0)
+random.seed(0)
 
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
@@ -20,17 +25,17 @@ parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of trai
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='results',help="Cuda device to select")
 parser.add_argument("-w", "--window", type=int, default='1',help="Cuda device to select")
-parser.add_argument("-b", "--blocks", type=int, default='2',help="Cuda device to select")
+parser.add_argument("-b", "--blocks", type=int, default='3',help="Number of blocks")
+parser.add_argument("-s", "--starting", type=int, default='4',help="Number of blocks")
 args = parser.parse_args()
 
-BLOCKS = (3,4,8,16,32,64)
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")
 RESUME = args.resume
 OVERWRITE = args.overwrite
 EPOCHS = args.epochs
 DEVICE_ID = args.device
-PATIENCE = 20
 CONFIG = {
+    'PATIENCE':20,
     'BEST_DEV_LOSS':torch.inf,
     'BEST_DEV_F1':0,
     'LAST_EPOCH':0,
@@ -38,40 +43,30 @@ CONFIG = {
     'DEVLOSSI':[],
     'TRAINF1':[],
     'DEVF1':[],
-    'WINDOWSIZE':args.window,
+    'WINDOW_SIZE':args.window,
     'BATCH_SIZE':512,
     'LEARNING_RATE':3e-4,
-    'BLOCK_SIZES':BLOCKS[:args.blocks],
-    'PATIENCE':PATIENCE,
-    'PROGRESS':0
+    'PROGRESS':0,
+    'STARTING_FILTERS':args.starting,
+    'N_BLOCKS':args.blocks
 }
 
-PROJECT_DIR = f'../projects/{args.project}'
+# PROJECT_DIR = f'../projects/{args.project}'
+PROJECT_DIR = f'../projects/balanced_w{args.window}_b{args.blocks}_s{args.starting}'
 
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
-import random
-torch.manual_seed(0)
-np.random.seed(0)
-random.seed(0)
-from lib.ekyn import *
-idx = get_ekyn_ids()
-train_idx,test_idx = train_test_split(idx,test_size=.25,random_state=0)
-print(train_idx,test_idx)
-print(len(train_idx),len(test_idx))
-train_idx = train_idx
-test_idx = test_idx
-print(train_idx,test_idx)
-X,y = load_eeg_label_pairs(ids=train_idx)
-trainloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
-X,y = load_eeg_label_pairs(ids=test_idx)
-devloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
+## Your Code Here ##
+train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
+trainloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=train_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
+devloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=test_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=False)
 
-from lib.models import ResNetv3
-model = ResNetv3(windowsize=CONFIG['WINDOWSIZE'],starting_filters=8,n_blocks=3)
-criterion = torch.nn.CrossEntropyLoss()
+model = ResNetv3(windowsize=CONFIG['WINDOW_SIZE'],starting_filters=CONFIG['STARTING_FILTERS'],n_blocks=CONFIG['N_BLOCKS'])
+criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
+## End Your Code Here ##
+
 print("Params: ", sum([p.flatten().size()[0] for p in list(model.parameters())]))
 CONFIG['MODEL'] = str(model)
 model.to(DEVICE)
@@ -121,7 +116,7 @@ for epoch in pbar:
         torch.save(optimizer.state_dict(), f=f'{PROJECT_DIR}/best.adam.pt')
         torch.save(optimizer.state_dict(), f=f'{PROJECT_DIR}/{DATE}/best.adam.pt')
         CONFIG['PROGRESS'] = 0
-    elif CONFIG['PROGRESS'] == PATIENCE:
+    elif CONFIG['PROGRESS'] == CONFIG['PATIENCE']:
         print("early stopping")
         break
     else:

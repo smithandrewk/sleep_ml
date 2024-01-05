@@ -1,0 +1,1 @@
+python3 train.py -w 1 -b 2 -s 32

@@ -21,6 +21,7 @@ parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to s
 parser.add_argument("-p", "--project", type=str, default='results',help="Cuda device to select")
 parser.add_argument("-w", "--window", type=int, default='1',help="Cuda device to select")
 parser.add_argument("-b", "--blocks", type=int, default='2',help="Cuda device to select")
+parser.add_argument("-f", "--filters", type=int, default='4',help="Cuda device to select")
 args = parser.parse_args()
 
 BLOCKS = (3,4,8,16,32,64)
@@ -41,7 +42,8 @@ CONFIG = {
     'WINDOWSIZE':args.window,
     'BATCH_SIZE':512,
     'LEARNING_RATE':3e-4,
-    'BLOCK_SIZES':BLOCKS[:args.blocks],
+    'BLOCKS':args.blocks,
+    'STARTING_FILTERS':args.filters,
     'PATIENCE':PATIENCE,
     'PROGRESS':0
 }
@@ -75,23 +77,26 @@ train_idx = train_idx
 test_idx = test_idx
 print(train_idx,test_idx)
 X,y = load_eeg_label_pairs(ids=train_idx)
-trainloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
+trainloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
 X,y = load_eeg_label_pairs(ids=test_idx)
-devloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=512,shuffle=True)
+devloader = DataLoader(Windowset(X,y,CONFIG['WINDOWSIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
 from lib import models
 
 class MyLSTM(nn.Module):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, starting_filters=4, n_blocks=2, windowsize=3, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.encoder = models.ResNetv3(windowsize=1,starting_filters=2,n_blocks=2)
-        self.lstm = nn.LSTM(input_size=4,hidden_size=32,batch_first=True)
-        self.classifier = nn.Linear(in_features=32,out_features=3)
+        self.starting_filters = starting_filters
+        self.n_blocks = n_blocks
+        self.windowsize = windowsize
+        self.encoder = models.ResNetv3(windowsize=1,starting_filters=self.starting_filters,n_blocks=self.n_blocks)
+        self.lstm = nn.LSTM(input_size=self.starting_filters*(2**(self.n_blocks-1)),hidden_size=16,batch_first=True)
+        self.classifier = nn.Linear(in_features=16,out_features=3)
     def forward(self,x):
-        x = self.encoder(x).reshape(-1,3,4)
+        x = self.encoder(x).reshape(-1,self.windowsize,self.starting_filters*(2**(self.n_blocks-1)))
         _,(h,_) = self.lstm(x)
         x = self.classifier(h.squeeze())
         return x
-model = MyLSTM()
+model = MyLSTM(starting_filters=CONFIG['STARTING_FILTERS'],n_blocks=CONFIG['BLOCKS'],windowsize=CONFIG['WINDOWSIZE'])
 
 criterion = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])

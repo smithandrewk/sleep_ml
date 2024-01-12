@@ -57,7 +57,7 @@ PROJECT_DIR = f'../projects/balanced_w{args.window}_b{args.blocks}_s{args.starti
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
-## Your Code Here ##
+## Your Code Here (trainloader,devloader,model,criterion,optimizer) ##
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
 trainloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=train_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
 devloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=test_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=False)

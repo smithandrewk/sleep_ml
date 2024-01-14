@@ -282,3 +282,46 @@ class ResNetv3(nn.Module):
 
         x = self.classifier(x)
         return x
+
+class ResNetv4(nn.Module):
+    def __init__(self, in_features, block_sizes=(4,4,4,8),*args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.in_features = in_features * 5000
+        self.block_sizes = block_sizes
+
+        kernel_size = 10
+        padding = 4
+        out_features = math.floor(((self.in_features+2*padding-1*(kernel_size-1)-1))/2+1)
+        
+        self.c1 = nn.Conv1d(in_channels=1,out_channels=block_sizes[0],kernel_size=kernel_size,stride=2,padding=padding,dilation=1)
+        self.ln1 = nn.LayerNorm(normalized_shape=(out_features))
+        out_features = math.floor(((out_features-2)/2)+1)
+        self.mp1 = nn.MaxPool1d(kernel_size=2,stride=2)
+
+        blocks = [
+            ResidualBlockv2(n_features=out_features,in_feature_maps=block_sizes[0],out_feature_maps=block_sizes[0])
+        ]
+        for i in range(len(block_sizes)-1):
+            if block_sizes[i] != block_sizes[i+1]:
+                out_features = math.floor((out_features-1)/2+1)
+            block = ResidualBlockv2(n_features=out_features,in_feature_maps=block_sizes[i],out_feature_maps=block_sizes[i+1])
+            blocks.append(block)
+        self.blocks = nn.Sequential(*blocks)
+
+        self.classifier = nn.Sequential(
+            nn.AvgPool1d(kernel_size=out_features),
+            nn.Flatten(start_dim=1),
+            nn.Linear(block_sizes[-1],3),
+            # nn.ReLU(),
+            # nn.Linear(32,3)
+        )
+    def forward(self,x):
+        x = x.reshape(-1,1,self.in_features)
+        x = self.c1(x)
+        x = self.ln1(x)
+        x = relu(x)
+        x = self.mp1(x)
+
+        x = self.blocks(x)
+        x = self.classifier(x)
+        return x

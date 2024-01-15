@@ -3,3 +3,6 @@ mne
 matplotlib
 numpy
 seaborn
+scikit-learn
+torch
+tensorboard

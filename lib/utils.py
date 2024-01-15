@@ -562,3 +562,17 @@ class Windowset(Dataset):
 
     def __getitem__(self, idx):
         return (self.X[idx:idx+self.windowsize].flatten(),self.y[idx])
+def sample_regnet():
+    w_0 = (np.round(int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(32))),0,32))/4) * 4) + 4
+    d = int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(16)+1)),0,16))
+    w_a = w_0
+    w_m = 2
+    u_j = [w_0 + w_a * j for j in range(d)]
+    s_j = [np.round(np.log2(u / w_0)) for u in u_j]
+    w_j = [int(w_0 * (w_m**s)) for s in s_j]
+    w_i = list(np.where(np.bincount(w_j) != 0)[0])
+    d_i = [np.bincount(w_j)[w] for w in w_i]
+    if(len(d_i) > 4):
+        return sample_regnet()
+    else:
+        return w_i,d_i,w_j

@@ -1,3 +1,34 @@
-python3 train.py -w 1 -b 3 -s 16 &&
-python3 train.py -w 1 -b 3 -s 32 &&
-python3 train.py -w 1 -b 3 -s 64
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py &&
+python3 train_random_regnet.py

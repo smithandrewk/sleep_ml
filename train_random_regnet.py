@@ -86,7 +86,8 @@ if RESUME:
     CONFIG['PROGRESS'] = 0
 else:
     if not OVERWRITE and os.path.exists(PROJECT_DIR):
-        raise Exception('project exists, either resume or pass -o to overwrite')
+        print('project exists, resume or overwrite')
+        exit(0)
     os.system(f'rm -rf {PROJECT_DIR}')
     os.makedirs(PROJECT_DIR)
 

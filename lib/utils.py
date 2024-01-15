@@ -23,6 +23,40 @@ from pandas import Categorical
 from pandas import NA
 from torch import from_numpy,zeros
 from scipy.signal import resample
+from ekyn import load_eeg_label_pair,get_ekyn_ids
+
+def load_paired_list(ids):
+    X = []
+    y = []
+    for id,type in ids:
+        if type == 'ekyn':
+            for condition in ['Vehicle', 'PF']:
+                Xi,yi = load_eeg_label_pair(id,condition)
+                X.append(Xi)
+                y.append(yi)
+        else:
+            Xi,yi = load_snezana_mice(id)
+            X.append(Xi)
+            y.append(yi)
+    X = cat(X)
+    y = cat(y)
+    return X,y
+def get_merged_ekyn_snezana_mice_train_test_ids():
+    return [ekyn+snezana for ekyn,snezana in zip(train_test_split([(id,'ekyn') for id in get_ekyn_ids()],test_size=.25,random_state=0),train_test_split([(id,'snezana_mice') for id in get_snezana_mice_ids()],test_size=.25,random_state=0))]
+def get_snezana_mice_ids():
+    return sorted(set([file.split('.')[0] for file in os.listdir(SNEZANA_MICE_DIR)]))
+def load_snezana_mice(id):
+    return (torch.load(f'{SNEZANA_MICE_DIR}/{id}.X.pt'),torch.load(f'{SNEZANA_MICE_DIR}/{id}.y.pt'))
+def load_snezana_mice_list(ids):
+    X = []
+    y = []
+    for id in ids:
+        Xi,yi = load_snezana_mice(id)
+        X.append(Xi)
+        y.append(yi)
+    X = cat(X)
+    y = cat(y)
+    return X,y
 
 def get_courtney_ids():
     return [filename.split(' ')[1] for filename in os.listdir(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/')]
@@ -563,7 +597,7 @@ class Windowset(Dataset):
     def __getitem__(self, idx):
         return (self.X[idx:idx+self.windowsize].flatten(),self.y[idx])
 def sample_regnet():
-    w_0 = (np.round(int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(32))),0,32))/4) * 4) + 4
+    w_0 = (np.round(int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(64))),0,32))/8) * 8) + 8
     d = int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(16)+1)),0,16))
     w_a = w_0
     w_m = 2
@@ -572,7 +606,7 @@ def sample_regnet():
     w_j = [int(w_0 * (w_m**s)) for s in s_j]
     w_i = list(np.where(np.bincount(w_j) != 0)[0])
     d_i = [np.bincount(w_j)[w] for w in w_i]
-    if(len(d_i) > 4):
+    if(len(d_i) > 4 or len(d_i) < 3):
         return sample_regnet()
     else:
         return w_i,d_i,w_j

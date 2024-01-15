@@ -1,7 +1,6 @@
 from lib.utils import *
 from lib.models import *
 from lib.env import *
-from lib.ekyn import *
 
 import torch
 from tqdm import tqdm
@@ -13,6 +12,7 @@ import os
 import json
 import datetime
 import random
+from torch.utils.tensorboard import SummaryWriter
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -21,12 +21,12 @@ random.seed(0)
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument('-o','--overwrite', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
-parser.add_argument("-e", "--epochs", type=int, default=100,help="Number of training iterations")
+parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("-p", "--project", type=str, default='results',help="Cuda device to select")
 parser.add_argument("-w", "--window", type=int, default='1',help="Cuda device to select")
-parser.add_argument("-b", "--blocks", type=int, default='3',help="Number of blocks")
-parser.add_argument("-s", "--starting", type=int, default='4',help="Number of blocks")
+parser.add_argument("-n", "--ntraining", type=int, default='49',help="Number of blocks")
+parser.add_argument("-b", "--blocks",nargs='+', type=int, help="Number of blocks")
 args = parser.parse_args()
 
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")
@@ -35,7 +35,7 @@ OVERWRITE = args.overwrite
 EPOCHS = args.epochs
 DEVICE_ID = args.device
 CONFIG = {
-    'PATIENCE':20,
+    'PATIENCE':30,
     'BEST_DEV_LOSS':torch.inf,
     'BEST_DEV_F1':0,
     'LAST_EPOCH':0,
@@ -43,34 +43,36 @@ CONFIG = {
     'DEVLOSSI':[],
     'TRAINF1':[],
     'DEVF1':[],
-    'WINDOW_SIZE':args.window,
     'BATCH_SIZE':512,
     'LEARNING_RATE':3e-4,
     'PROGRESS':0,
-    'STARTING_FILTERS':args.starting,
-    'N_BLOCKS':args.blocks
+    'WINDOW_SIZE':args.window,
+    'BLOCKS':args.blocks,
+    'N_TRAINING':args.ntraining
 }
 
-# PROJECT_DIR = f'../projects/{args.project}'
-PROJECT_DIR = f'../projects/balanced_w{args.window}_b{args.blocks}_s{args.starting}'
+PROJECT_DIR = f'projects/w{args.window}_n{args.ntraining}_b{CONFIG["BLOCKS"]}'
+writer = SummaryWriter(f'runs/w{args.window}_n{args.ntraining}_b{CONFIG["BLOCKS"]}')
 
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
 ## Your Code Here (trainloader,devloader,model,criterion,optimizer) ##
+from lib.ekyn import *
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
 trainloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=train_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
 devloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=test_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=False)
-
-model = ResNetv3(windowsize=CONFIG['WINDOW_SIZE'],starting_filters=CONFIG['STARTING_FILTERS'],n_blocks=CONFIG['N_BLOCKS'])
+model = ResNetv4(in_features=CONFIG['WINDOW_SIZE'],block_sizes=CONFIG['BLOCKS'])
 criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 ## End Your Code Here ##
 
+
+
+print(model)
 print("Params: ", sum([p.flatten().size()[0] for p in list(model.parameters())]))
 CONFIG['MODEL'] = str(model)
 model.to(DEVICE)
-
 if RESUME:
     if not os.path.exists(f'{PROJECT_DIR}/last.pt'):
         raise Exception('cannot resume, last.pt does not exist')
@@ -93,9 +95,14 @@ for epoch in pbar:
     loss,f1 = training_loop(model=model,trainloader=trainloader,criterion=criterion,optimizer=optimizer,device=DEVICE)
     CONFIG["TRAINLOSSI"].append(loss)
     CONFIG["TRAINF1"].append(f1)
+    writer.add_scalar('train loss',loss,epoch)
+    writer.add_scalar('train f1',f1,epoch)
+
     loss,f1 = development_loop(model=model,devloader=devloader,criterion=criterion,device=DEVICE)
     CONFIG["DEVLOSSI"].append(loss)
     CONFIG["DEVF1"].append(f1)
+    writer.add_scalar('dev loss',loss,epoch)
+    writer.add_scalar('dev f1',f1,epoch)
     CONFIG["LAST_EPOCH"] += 1
 
     torch.save(model.state_dict(), f=f'{PROJECT_DIR}/last.pt')

@@ -2,7 +2,6 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 import seaborn as sns
-from mne.io import read_raw_edf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import torch
@@ -23,7 +22,7 @@ from pandas import Categorical
 from pandas import NA
 from torch import from_numpy,zeros
 from scipy.signal import resample
-from ekyn import load_eeg_label_pair,get_ekyn_ids
+from lib.ekyn import load_eeg_label_pair,get_ekyn_ids
 
 def load_paired_list(ids):
     X = []
@@ -60,12 +59,6 @@ def load_snezana_mice_list(ids):
 
 def get_courtney_ids():
     return [filename.split(' ')[1] for filename in os.listdir(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/')]
-    
-def load_raw_edf_by_path(path):
-    raw = read_raw_edf(path,verbose=False)
-    raw.rename_channels({'EEG 1':'EEG','EEG 2':'EMG'})
-    raw.set_channel_types({'EEG':'eeg','EMG':'emg'},verbose=False)
-    return raw
 
 def cm_grid(y_true,y_pred,save_path='cm.jpg'):
     fig,axes = plt.subplots(2,2,figsize=(5,5))

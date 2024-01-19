@@ -14,8 +14,6 @@ import datetime
 import random
 from torch.utils.tensorboard import SummaryWriter
 
-w_s,d_s,w_b = sample_regnet() # width_stage,depth_stage,width_block
-
 torch.manual_seed(0)
 np.random.seed(0)
 random.seed(0)
@@ -25,13 +23,15 @@ parser.add_argument('-r','--resume', action='store_true', help="when this flag i
 parser.add_argument('-o','--overwrite', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
-parser.add_argument("-p", "--project", type=str, default='results',help="Cuda device to select")
-parser.add_argument("-w", "--window", type=int, default='1',help="Cuda device to select")
+parser.add_argument("--project", type=str, default='results',help="Cuda device to select")
+parser.add_argument("-w", "--window", type=int, default='5000',help="Cuda device to select")
 parser.add_argument("-n", "--ntraining", type=int, default='49',help="Number of blocks")
+parser.add_argument("--sequence", type=int, default='3',help="Number of blocks")
 parser.add_argument("-b", "--blocks",nargs='+', type=int, help="Number of blocks")
-args = parser.parse_args()
+parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
+parser.add_argument("--depth",nargs='+', type=int, help="Number of blocks")
 
-print(w_s,d_s,w_b)
+args = parser.parse_args()
 
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")
 RESUME = args.resume
@@ -51,23 +51,30 @@ CONFIG = {
     'LEARNING_RATE':3e-4,
     'PROGRESS':0,
     'WINDOW_SIZE':args.window,
-    'WIDTHI':str(w_s),
-    'DEPTHI':str(d_s),
-    'N_TRAINING':args.ntraining
+    'DEPTHI':args.depth,
+    'WIDTHI':args.width,
+    'N_TRAINING':args.ntraining,
+    'SEQUENCE_LENGTH':args.sequence
 }
+if args.overwrite:
+    os.system(f'rm -rf projects/{args.project}')
+    os.system(f'rm -rf runs/{args.project}')
 
-PROJECT_DIR = f'projects/w{args.window}_n{args.ntraining}_d{str(d_s)}_b{str(w_s)}'
-writer = SummaryWriter(f'runs/w{args.window}_n{args.ntraining}_d{str(d_s)}_b{str(w_s)}')
+PROJECT_DIR = f'projects/{args.project}'
+writer = SummaryWriter(f'runs/{args.project}')
 
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
 ## Your Code Here (trainloader,devloader,model,criterion,optimizer) ##
-from lib.ekyn import *
+from lib.datasets import SequencedDataset
+from torch.utils.data import ConcatDataset
+from lib.ekyn import get_ekyn_ids
+from lib.models import Dumbledore
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
-trainloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=train_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
-devloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=test_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=False)
-model = RegNet(in_features=1,depthi=d_s,widthi=w_s)
+trainloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
+devloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
+model = Dumbledore(encoder_path=f'projects/0',sequence_length=CONFIG['SEQUENCE_LENGTH'])
 criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 ## End Your Code Here ##

@@ -2,6 +2,9 @@ from torch import nn
 from torch.nn.functional import relu
 import torch
 from lib.env import *
+import math
+import json
+
 class MLP(nn.Module):
     """
     MLP according to Wang et. al (proposed as 
@@ -111,9 +114,9 @@ class Frodo(nn.Module):
     def __init__(self,n_features,device='cuda') -> None:
         super().__init__()
         self.n_features = n_features
-        self.block1 = ResidualBlock(1,8,n_features).to(device)
-        self.block2 = ResidualBlock(8,16,n_features).to(device)
-        self.block3 = ResidualBlock(16,16,n_features).to(device)
+        self.block1 = ResidualBlock(1,8,n_features)
+        self.block2 = ResidualBlock(8,16,n_features)
+        self.block3 = ResidualBlock(16,16,n_features)
 
         self.gap = nn.AvgPool1d(kernel_size=n_features)
         self.fc1 = nn.Linear(in_features=16,out_features=3)
@@ -198,7 +201,7 @@ class ResidualBlockv2(nn.Module):
         else:
             x = x + identity
         return x
-import math
+
 class ResNetv2(nn.Module):
     def __init__(self, windowsize, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -327,24 +330,26 @@ class ResNetv4(nn.Module):
         return x
 
 class RegNet(nn.Module):
-    def __init__(self, in_features, depthi=[1,1,3,1], widthi=[2,4,16,32], *args, **kwargs) -> None:
+    def __init__(self, in_features, in_channels, depthi=[1,1,3,1], widthi=[2,4,16,32], n_classes=3, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.in_features = in_features * 5000
+        self.in_features = in_features
+        self.in_channels = in_channels
+        self.n_classes = n_classes
 
-        kernel_size = 10
-        padding = 4
-        in_features = math.floor(((self.in_features+2*padding-1*(kernel_size-1)-1))/2+1)
-        
-        self.c1 = nn.Conv1d(in_channels=1,out_channels=widthi[0],kernel_size=kernel_size,stride=2,padding=padding,dilation=1)
+        in_features = math.floor(((in_features-1))/2+1)
+        self.c1 = nn.Conv1d(in_channels=self.in_channels,out_channels=widthi[0],kernel_size=3,stride=2,padding=1,dilation=1)
         self.ln1 = nn.LayerNorm(normalized_shape=(in_features))
         self.mp1 = nn.MaxPool1d(kernel_size=2,stride=2)
-
         blocks = []
         in_feature_maps = widthi[0]
         for stage,depth in enumerate(depthi):
             for i in range(depth):
-                if i == 0:
-                    in_features = math.floor((in_features-1)/2+1)
+                if i == 0 and stage == 0:
+                    in_features = math.floor(((in_features-2)/2)+1)
+                    block = ResidualBlockv2(n_features=in_features,in_feature_maps=in_feature_maps,out_feature_maps=widthi[stage])
+                    in_feature_maps = widthi[stage]
+                elif i == 0:
+                    in_features = math.floor(((in_features-1))/2+1)
                     block = ResidualBlockv2(n_features=in_features,in_feature_maps=in_feature_maps,out_feature_maps=widthi[stage])
                     in_feature_maps = widthi[stage]
                 else:
@@ -352,21 +357,44 @@ class RegNet(nn.Module):
                 blocks.append(block)
             
         self.blocks = nn.Sequential(*blocks)
-
+        
         self.classifier = nn.Sequential(
             nn.AvgPool1d(kernel_size=in_features),
             nn.Flatten(start_dim=1),
-            nn.Linear(widthi[-1],3),
-            # nn.ReLU(),
-            # nn.Linear(32,3)
+            nn.Linear(widthi[-1],self.n_classes),
         )
-    def forward(self,x):
-        x = x.reshape(-1,1,self.in_features)
+    def forward(self,x,return_encoding=False):
+        x = x.reshape(-1,self.in_channels,self.in_features)
         x = self.c1(x)
         x = self.ln1(x)
         x = relu(x)
         x = self.mp1(x)
-
         x = self.blocks(x)
+        if return_encoding:
+            return self.classifier[:2](x)
         x = self.classifier(x)
         return x
+
+class Dumbledore(nn.Module):
+    def __init__(self,encoder_path,sequence_length) -> None:
+        super().__init__()
+        self.encoder_path = encoder_path
+        self.sequence_length = sequence_length
+        self.encoder = self.get_encoder()
+        self.lstm = nn.LSTM(8,4,num_layers=1,bidirectional=True,batch_first=True)
+        self.fc1 = nn.Linear(8,3)
+    def forward(self,x):
+        x = self.encoder(x,return_encoding=True)
+        x = x.view(-1,self.sequence_length,8)
+        o,(h,c) = self.lstm(x)
+        x = self.fc1(o[:,-1])
+        return x
+    def get_encoder(self):
+        with open(f'{self.encoder_path}/config.json') as f:
+            ENCODER_CONFIG = json.load(f)
+        encoder = RegNet(in_features=ENCODER_CONFIG['WINDOW_SIZE'],in_channels=1,depthi=ENCODER_CONFIG['DEPTHI'],widthi=ENCODER_CONFIG['WIDTHI'])
+        encoder.load_state_dict(torch.load(f'{self.encoder_path}/best.f1.pt'))
+        print("Model is freezing encoder")
+        for p in encoder.parameters():
+                p.requires_grad = False
+        return encoder

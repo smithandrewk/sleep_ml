@@ -22,7 +22,7 @@ from pandas import Categorical
 from pandas import NA
 from torch import from_numpy,zeros
 from scipy.signal import resample
-from lib.ekyn import load_eeg_label_pair,get_ekyn_ids
+# from lib.ekyn import load_eeg_label_pair,get_ekyn_ids
 
 def load_paired_list(ids):
     X = []
@@ -128,6 +128,7 @@ def get_recording_start_stop_zdb(filename):
 def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
     model.eval()
     model.to(DEVICE)
+    criterion.to(DEVICE)
     with torch.no_grad():
         y_true = torch.Tensor()
         y_pred = torch.Tensor()

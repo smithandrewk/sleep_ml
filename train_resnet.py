@@ -23,10 +23,11 @@ parser.add_argument('-r','--resume', action='store_true', help="when this flag i
 parser.add_argument('-o','--overwrite', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
-parser.add_argument("-p", "--project", type=str, default='results',help="Cuda device to select")
-parser.add_argument("-w", "--window", type=int, default='1',help="Cuda device to select")
-parser.add_argument("-n", "--ntraining", type=int, default='49',help="Number of blocks")
-parser.add_argument("-b", "--blocks",nargs='+', type=int, help="Number of blocks")
+parser.add_argument("--project", type=str, default='results',help="Cuda device to select")
+parser.add_argument("--window", type=int, default=5000,help="Cuda device to select")
+parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
+parser.add_argument("--depth",nargs='+', type=int, help="Number of blocks")
+
 args = parser.parse_args()
 
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")
@@ -35,7 +36,7 @@ OVERWRITE = args.overwrite
 EPOCHS = args.epochs
 DEVICE_ID = args.device
 CONFIG = {
-    'PATIENCE':30,
+    'PATIENCE':20,
     'BEST_DEV_LOSS':torch.inf,
     'BEST_DEV_F1':0,
     'LAST_EPOCH':0,
@@ -47,27 +48,27 @@ CONFIG = {
     'LEARNING_RATE':3e-4,
     'PROGRESS':0,
     'WINDOW_SIZE':args.window,
-    'BLOCKS':args.blocks,
-    'N_TRAINING':args.ntraining
+    'DEPTHI':args.depth,
+    'WIDTHI':args.width,
 }
 
-PROJECT_DIR = f'projects/w{args.window}_n{args.ntraining}_b{CONFIG["BLOCKS"]}'
-writer = SummaryWriter(f'runs/w{args.window}_n{args.ntraining}_b{CONFIG["BLOCKS"]}')
+PROJECT_DIR = f'projects/{args.project}'
+writer = SummaryWriter(f'runs/{args.project}')
 
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
 ## Your Code Here (trainloader,devloader,model,criterion,optimizer) ##
-from lib.ekyn import *
+from lib.datasets import EpochedDataset
+from torch.utils.data import ConcatDataset
+from lib.ekyn import get_ekyn_ids
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
-trainloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=train_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
-devloader = DataLoader(Windowset(*load_eeg_label_pairs(ids=test_idx),CONFIG['WINDOW_SIZE']),batch_size=CONFIG['BATCH_SIZE'],shuffle=False)
-model = ResNetv4(in_features=CONFIG['WINDOW_SIZE'],block_sizes=CONFIG['BLOCKS'])
+trainloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
+devloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
+model = RegNet(in_features=CONFIG['WINDOW_SIZE'],in_channels=1,depthi=CONFIG['DEPTHI'],widthi=CONFIG['WIDTHI'])
 criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 ## End Your Code Here ##
-
-
 
 print(model)
 print("Params: ", sum([p.flatten().size()[0] for p in list(model.parameters())]))
@@ -83,7 +84,8 @@ if RESUME:
     CONFIG['PROGRESS'] = 0
 else:
     if not OVERWRITE and os.path.exists(PROJECT_DIR):
-        raise Exception('project exists, either resume or pass -o to overwrite')
+        print('project exists, resume or overwrite')
+        exit(0)
     os.system(f'rm -rf {PROJECT_DIR}')
     os.makedirs(PROJECT_DIR)
 

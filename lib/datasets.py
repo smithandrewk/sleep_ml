@@ -2,36 +2,39 @@ from os.path import join
 from torch.utils.data import Dataset
 from torch import load
 import torch
-from lib.ekyn import load_eeg_label_pair,get_ekyn_ids
+from lib.ekyn import load_ekyn_pt,get_ekyn_ids
 from sklearn.model_selection import train_test_split
 from torch import cat,zeros
-class EEGDataset(Dataset):
-    def __init__(self,dir,labels):
-        self.labels = load(f'{labels}')
-        self.dir = dir
+# Jan 19
+class SequencedDataset(torch.utils.data.Dataset):
+    def __init__(self,idx,condition,sequence_length):
+        self.sequence_length = sequence_length
+        X,y = load_ekyn_pt(idx=idx,condition=condition)
+        self.X = torch.cat([torch.zeros(sequence_length // 2,5000),X,torch.zeros(sequence_length // 2,5000)])
+        self.y = y
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.y)
 
     def __getitem__(self, idx):
-        path = join(self.dir, str(idx)+".pt")
-        X = load(path).reshape(-1,5000)[:,::10]
-        y = self.labels[idx]
+        return (self.X[idx:idx+self.sequence_length],self.y[idx])
 
-        return (X,y)
-class WindowedEEGDataset(Dataset):
-    def __init__(self,dir,ids):
-        self.dir = dir
-        self.ids = ids
+# Jan 19
+class EpochedDataset(torch.utils.data.Dataset):
+    """
+    Dataset for training w1 resnets with ekyn data
+    """
+    def __init__(self,idx,condition):
+        X,y = load_ekyn_pt(idx=idx,condition=condition)
+        self.X = X
+        self.y = y
 
     def __len__(self):
-        return len(self.ids)
+        return len(self.y)
 
     def __getitem__(self, idx):
-        id = self.ids[idx]
-        X,y = torch.load(f'{self.dir}/{id}.pt')
+        return (self.X[idx:idx+1],self.y[idx])
 
-        return (X,y)
 
 class Windowset(Dataset):
     def __init__(self,X,y):

@@ -2,7 +2,7 @@ from os.path import join
 from torch.utils.data import Dataset
 from torch import load
 import torch
-from lib.ekyn import load_ekyn_pt,get_ekyn_ids
+from lib.ekyn import *
 from sklearn.model_selection import train_test_split
 from torch import cat,zeros
 # Jan 19
@@ -25,7 +25,7 @@ class EpochedDataset(torch.utils.data.Dataset):
     Dataset for training w1 resnets with ekyn data
     """
     def __init__(self,idx,condition):
-        X,y = load_ekyn_pt(idx=idx,condition=condition)
+        X,y = load_ekyn_pt_robust_scaled(idx=idx,condition=condition)
         self.X = X
         self.y = y
 

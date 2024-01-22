@@ -67,10 +67,11 @@ class Gandalf(nn.Module):
         self.fc1 = nn.Linear(64,3)
     def forward(self,x_2d,classification=True):
         x_2d = x_2d.view(-1,9,1,5000)
-        x = torch.Tensor().to(DEVICE)
+        x = []
         for t in range(x_2d.size(1)):
             xi = self.encoder(x_2d[:,t,:,:],classification=False)
-            x = torch.cat([x,xi.unsqueeze(0)],dim=0)
+            x.append(xi.unsqueeze(0))
+        x = torch.cat(x,dim=0)
         out,_ = self.lstm(x)
         if(classification):
             x = self.fc1(out[-1])
@@ -81,8 +82,8 @@ from lib.datasets import EpochedDataset,SequencedDataset
 from torch.utils.data import ConcatDataset
 from lib.ekyn import get_ekyn_ids
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
-trainloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=9) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
-devloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=9) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
+trainloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=9) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=128,shuffle=True)
+devloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=9) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=128,shuffle=True)
 model = Gandalf()
 criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])

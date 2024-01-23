@@ -1,1 +1,4 @@
-python3 train_resnet.py --depth 1 1 --width 32 64 --project 15
+for i in {0..15};
+do
+python3 train_resnet.py --depth 2 --width 32 --fold $i;
+done

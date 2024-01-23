@@ -608,7 +608,7 @@ def sample_regnet():
     if len(d) != 4:
         return sample_regnet()
     else:
-        return list(d),list(w),[wi for wi,di in zip(w,d) for i in range(di)]
+        return [int(di) for di in d],[int(wi) for wi in w],[wi for wi,di in zip(w,d) for i in range(di)]
 def plot_regnet(d,w,w_b):
     plt.figure(figsize=(7.2,4.25),dpi=200)
 

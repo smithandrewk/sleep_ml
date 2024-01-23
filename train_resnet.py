@@ -25,8 +25,10 @@ parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of tra
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("--project", type=str, default='results',help="Cuda device to select")
 parser.add_argument("--window", type=int, default=5000,help="Cuda device to select")
+parser.add_argument("--fold", type=int, default=0,help="Cuda device to select")
 parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
 parser.add_argument("--depth",nargs='+', type=int, help="Number of blocks")
+
 
 args = parser.parse_args()
 
@@ -36,7 +38,7 @@ OVERWRITE = args.overwrite
 EPOCHS = args.epochs
 DEVICE_ID = args.device
 CONFIG = {
-    'PATIENCE':20,
+    'PATIENCE':10,
     'BEST_DEV_LOSS':torch.inf,
     'BEST_DEV_F1':0,
     'LAST_EPOCH':0,
@@ -50,10 +52,11 @@ CONFIG = {
     'WINDOW_SIZE':args.window,
     'DEPTHI':args.depth,
     'WIDTHI':args.width,
+    'FOLD':args.fold
 }
 
-PROJECT_DIR = f'projects/{args.project}'
-writer = SummaryWriter(f'runs/{args.project}')
+PROJECT_DIR = f'projects/fold{args.fold}'
+writer = SummaryWriter(f'runs/fold{args.fold}')
 
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
@@ -62,12 +65,18 @@ if DEVICE == 'cuda':
 from lib.datasets import EpochedDataset
 from torch.utils.data import ConcatDataset
 from lib.ekyn import get_ekyn_ids
-train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
+
+train_idx = get_ekyn_ids()
+test_idx = [train_idx[CONFIG['FOLD']]]
+train_idx.remove(test_idx[0])
+print(train_idx,test_idx)
+print(len(train_idx),len(test_idx))
+
 trainloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
 devloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
 model = RegNet(in_features=CONFIG['WINDOW_SIZE'],in_channels=1,depthi=CONFIG['DEPTHI'],widthi=CONFIG['WIDTHI'])
 criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
-optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
+optimizer = torch.optim.AdamW(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 ## End Your Code Here ##
 
 print(model)

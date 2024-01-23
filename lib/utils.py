@@ -591,16 +591,37 @@ class Windowset(Dataset):
     def __getitem__(self, idx):
         return (self.X[idx:idx+self.windowsize].flatten(),self.y[idx])
 def sample_regnet():
-    w_0 = (np.round(int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(64))),0,32))/8) * 8) + 8
-    d = int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(16)+1)),0,16))
-    w_a = w_0
-    w_m = 2
-    u_j = [w_0 + w_a * j for j in range(d)]
-    s_j = [np.round(np.log2(u / w_0)) for u in u_j]
-    w_j = [int(w_0 * (w_m**s)) for s in s_j]
-    w_i = list(np.where(np.bincount(w_j) != 0)[0])
-    d_i = [np.bincount(w_j)[w] for w in w_i]
-    if(len(d_i) > 4 or len(d_i) < 3):
+    initial_width = np.round(int(np.clip(np.exp(np.random.uniform(np.log(8),np.log(128))),0,128)))
+    slope = np.round(int(np.clip(np.exp(np.random.uniform(np.log(8),np.log(128))),0,128)))
+    network_depth = int(np.clip(np.exp(np.random.uniform(np.log(1),np.log(20)+1)),0,20))
+    quantized_param = np.random.uniform(2,3)
+    # We need to derive block width and number of blocks from initial parameters.
+    parameterized_width = initial_width + slope * np.arange(network_depth)  # From equation 2
+    parameterized_block = np.log(parameterized_width / initial_width) / np.log(quantized_param)  # From equation 3
+
+    parameterized_block = np.round(parameterized_block)
+    quantized_width = initial_width * np.power(quantized_param, parameterized_block)
+    # We need to convert quantized_width to make sure that it is divisible by 8
+    quantized_width = 8 * np.round(quantized_width / 8)
+
+    w, d = np.unique(quantized_width.astype(int), return_counts=True)
+    if len(d) != 4:
         return sample_regnet()
     else:
-        return w_i,d_i,w_j
+        return list(d),list(w),[wi for wi,di in zip(w,d) for i in range(di)]
+def plot_regnet(d,w,w_b):
+    plt.figure(figsize=(7.2,4.25),dpi=200)
+
+    plt.scatter(range(len(w_b)),w_b)
+    plt.plot(range(len(w_b)),w_b)
+
+    plt.grid()
+    plt.yscale('log')
+    plt.gca().set_axisbelow(True)
+    plt.ylim([8,1024])
+    plt.yticks([8,16,32,64,128,256,512,1024,2048],['8','16','32','64','128','256','512','1024','2048'])
+    plt.minorticks_off()
+    plt.xlabel('block index')
+    plt.ylabel('width')
+    plt.gca().text(0.7, 0.4, f'd$_i$ = {[di for di in d]}\nw$_i$ = {[wi for wi in w]}', transform=plt.gca().transAxes, fontsize=10,
+            verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=1));

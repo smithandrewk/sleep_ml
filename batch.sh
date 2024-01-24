@@ -1,1 +1,0 @@
-python3 train_resnet.py --depth 4 --width 32 --fold 0

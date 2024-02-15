@@ -398,3 +398,107 @@ class Dumbledore(nn.Module):
         # for p in encoder.parameters():
         #         p.requires_grad = False
         return encoder
+
+def get_padding(l,out_l,k,s,d=1):
+    if l % 2 == 0:
+        return ((out_l-1)*s - l + d*(k-1))//2 + 1
+    return ((out_l-1)*s - l + d*(k-1) + 1)//2 
+
+class XBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, seq_len, b, g, p_dropout=None):
+        super().__init__()
+
+        stride = 1
+        self.seq_len = seq_len
+        if out_channels > in_channels:
+            stride = 2
+            self.seq_len = seq_len // 2 if seq_len % 2 == 0 else seq_len // 2 + 1
+
+        padding = get_padding(seq_len, self.seq_len, kernel_size, stride)
+        
+        self.c = nn.Sequential(
+            nn.Conv1d(in_channels, in_channels // b, kernel_size=1, padding=0),
+            nn.LayerNorm((seq_len)),
+            nn.ReLU(),
+            nn.Conv1d(in_channels // b, in_channels // b, kernel_size=kernel_size, padding=padding, groups=g, stride=stride),
+            nn.LayerNorm((self.seq_len)),
+            nn.ReLU(),
+            nn.Conv1d(in_channels // b, out_channels, kernel_size=1, padding=0),
+            nn.LayerNorm((self.seq_len)),
+            nn.ReLU()
+        )
+        if p_dropout is not None and p_dropout > 0:
+            self.c.add_module('dropout', nn.Dropout(p=p_dropout))
+        
+        self.identity = nn.Sequential(
+            nn.Conv1d(in_channels, out_channels, kernel_size=1, padding=0, stride=stride),
+            nn.LayerNorm((self.seq_len)),
+            nn.ReLU()
+        ) if out_channels > in_channels else nn.Identity()
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        return self.relu(self.identity(x) + self.c(x))
+
+class RegNetX(nn.Module):
+    def __init__(self, winsize, in_channels, stem_out_c, d: list, w: list, b, g, p_dropout=None):
+        """
+            stem_out_c: out channels of stem before first stage
+            d: tuple of num blocks in each stage
+            w: tuple of num channels in each stage
+        """        
+        super().__init__()
+        self.winsize = winsize
+        self.in_channels = in_channels
+        self.stem_out_c = stem_out_c
+        self.n_stage = len(d)
+        if len(w) != len(d):
+            raise ValueError('d and w must have same length')
+        
+        self.d_str = '-'.join([str(di) for di in d])
+        self.w_str = '-'.join([str(wi) for wi in w])
+        self.g = g
+        self.b = b
+        self.p_dropout = p_dropout
+
+        s = nn.Sequential()
+        w = [stem_out_c] + list(w)
+
+        stem_pre_ln = math.floor(((winsize-1))/2+1)
+        stem_out_len = math.floor(((stem_pre_ln-3))/2+1)
+        
+        for i in range(self.n_stage):
+            rs = nn.Sequential()
+            for j in range(d[i]):
+                rs.add_module(f'stage-{i}_block-{j}', XBlock(
+                    w[i] if j==0 else w[i+1], 
+                    w[i+1], 
+                    kernel_size=3, 
+                    seq_len=rs[-1].seq_len if j>0 else s[-1][-1].seq_len if i>0 else stem_out_len, 
+                    b=b, 
+                    g=g, 
+                    p_dropout=p_dropout
+                ))
+            s.add_module(f'stage-{i}', rs)
+
+        self.e = nn.Sequential(
+            nn.Conv1d(in_channels, stem_out_c, kernel_size=3, stride=2, padding=1),
+            nn.LayerNorm((stem_pre_ln)),
+            nn.MaxPool1d(kernel_size=2,stride=2),
+            nn.ReLU(),
+            s
+        )
+
+        self.o = nn.Sequential(
+            nn.AvgPool1d(kernel_size=rs[-1].seq_len if rs else stem_out_len), # Nxdims[-1]x1
+            nn.Flatten(start_dim=1), # Nxdims[-1]
+            nn.Linear(in_features=w[-1], out_features=3)
+        )
+
+    def forward(self, x, return_embedding=False):
+        x = x.view(-1, self.in_channels, self.winsize)
+        x = self.e(x)
+        if return_embedding:
+            return self.o[0:2](x)
+        x = self.o(x)
+        return x

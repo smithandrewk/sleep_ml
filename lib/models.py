@@ -381,11 +381,19 @@ class Dumbledore(nn.Module):
         self.encoder_path = encoder_path
         self.sequence_length = sequence_length
         self.encoder = self.get_encoder()
+<<<<<<< Updated upstream
         self.lstm = nn.LSTM(8,4,num_layers=1,bidirectional=True,batch_first=True)
         self.fc1 = nn.Linear(8,3)
     def forward(self,x):
         x = self.encoder(x,return_encoding=True)
         x = x.view(-1,self.sequence_length,8)
+=======
+        self.lstm = nn.LSTM(3,8,num_layers=1,bidirectional=True,batch_first=True)
+        self.fc1 = nn.Linear(16,3)
+    def forward(self,x):
+        x = self.encoder(x,return_encoding=False)
+        x = x.view(-1,self.sequence_length,3)
+>>>>>>> Stashed changes
         o,(h,c) = self.lstm(x)
         x = self.fc1(o[:,-1])
         return x

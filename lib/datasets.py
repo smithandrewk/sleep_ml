@@ -5,6 +5,21 @@ import torch
 from lib.ekyn import *
 from sklearn.model_selection import train_test_split
 from torch import cat,zeros
+# Jan 29
+class EpochedDatasetAnimalIdentifier(torch.utils.data.Dataset):
+    """
+    Dataset for training w1 resnets with ekyn data
+    """
+    def __init__(self,idx,condition):
+        X,y = load_ekyn_pt(idx=get_ekyn_ids()[idx],condition=condition)
+        self.X = X
+        self.y = y
+        self.idx = idx
+    def __len__(self):
+        return len(self.y)-3
+
+    def __getitem__(self, idx):
+        return (self.X[idx:idx+4].flatten(),torch.nn.functional.one_hot(torch.tensor(self.idx),num_classes=6).float())
 # Jan 19
 class SequencedDataset(torch.utils.data.Dataset):
     def __init__(self,idx,condition,sequence_length):

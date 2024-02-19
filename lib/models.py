@@ -374,29 +374,36 @@ class RegNet(nn.Module):
             return self.classifier[:2](x)
         x = self.classifier(x)
         return x
-
 class Dumbledore(nn.Module):
-    def __init__(self,encoder_path,sequence_length) -> None:
+    def __init__(self,encoder_path,sequence_length,hidden_dim=8,frozen=True,embedding=False,layers=1) -> None:
         super().__init__()
         self.encoder_path = encoder_path
         self.sequence_length = sequence_length
+        self.frozen = frozen
+        self.embedding = embedding
+        self.layers = layers
         self.encoder = self.get_encoder()
-        self.lstm = nn.LSTM(3,8,num_layers=1,bidirectional=True,batch_first=True)
-        self.fc1 = nn.Linear(16,3)
+        if self.embedding:
+            self.latent_dim = self.ENCODER_CONFIG['WIDTHI'][-1]
+        else:
+            self.latent_dim = 3
+        self.lstm = nn.LSTM(self.latent_dim,hidden_dim,num_layers=self.layers,bidirectional=True,batch_first=True,dropout=.3)
+        self.fc1 = nn.Linear(hidden_dim*2,3)
     def forward(self,x):
-        x = self.encoder(x,return_encoding=False)
-        x = x.view(-1,self.sequence_length,3)
+        x = self.encoder(x,return_embedding=self.embedding)
+        x = x.view(-1,self.sequence_length,self.latent_dim)
         o,(h,c) = self.lstm(x)
         x = self.fc1(o[:,-1])
         return x
     def get_encoder(self):
         with open(f'{self.encoder_path}/config.json') as f:
-            ENCODER_CONFIG = json.load(f)
-        encoder = RegNet(in_features=ENCODER_CONFIG['WINDOW_SIZE'],in_channels=1,depthi=ENCODER_CONFIG['DEPTHI'],widthi=ENCODER_CONFIG['WIDTHI'])
+            self.ENCODER_CONFIG = json.load(f)
+        encoder = RegNetY(depth=self.ENCODER_CONFIG['DEPTHI'],width=self.ENCODER_CONFIG['WIDTHI'],stem_kernel_size=self.ENCODER_CONFIG['STEM_KERNEL_SIZE'])
         encoder.load_state_dict(torch.load(f'{self.encoder_path}/best.f1.pt'))
-        print("Model is freezing encoder")
-        # for p in encoder.parameters():
-        #         p.requires_grad = False
+        if self.frozen:
+            print("Model is freezing encoder")
+            for p in encoder.parameters():
+                p.requires_grad = False
         return encoder
 
 def get_padding(l,out_l,k,s,d=1):
@@ -503,35 +510,43 @@ class RegNetX(nn.Module):
         x = self.o(x)
         return x
 class YBlock(nn.Module):
-    def __init__(self,in_channels,out_channels) -> None:
+    def __init__(self,in_channels,out_channels,stride) -> None:
         super().__init__()
         self.block = nn.Sequential(
-            nn.Conv1d(in_channels=in_channels,out_channels=out_channels,kernel_size=3,stride=1,padding='same',bias=False),
+            nn.Conv1d(in_channels=in_channels,out_channels=out_channels,kernel_size=3,stride=stride,padding=1,bias=False),
             nn.ReLU()
         )
 
     def forward(self,x):
         x = self.block(x)
         return x
-        
 class RegNetY(nn.Module):
     def __init__(self,depth,width,stem_kernel_size) -> None:
         super().__init__()
-
+        print(depth,width)
         self.stem = nn.Sequential(
             nn.Conv1d(in_channels=1,out_channels=width[0],kernel_size=stem_kernel_size,stride=2,padding=stem_kernel_size//2,bias=False),
             nn.MaxPool1d(kernel_size=2,stride=2),
             nn.ReLU()
         )
 
+        sequence_length = 1250
+        in_channels = width[0]
         self.body = nn.Sequential()
         for stage_i in range(len(width)):
+            stride = 2
+            out_channels = width[stage_i]
+            sequence_length = math.ceil(sequence_length/2)
+            print(sequence_length)
+            print(f'stage {stage_i}, depth {depth[stage_i]}')
             for block_i in range(depth[stage_i]):
-                print(block_i)
-                self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=width[stage_i],out_channels=width[stage_i]))
+                print(f'block {stage_i} {in_channels} {out_channels}')
+                self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=in_channels,out_channels=out_channels,stride=stride))
+                in_channels = out_channels
+                stride = 1
 
         self.classifier = nn.Sequential(
-            nn.AvgPool1d(kernel_size=1250),
+            nn.AvgPool1d(kernel_size=sequence_length),
             nn.Flatten(start_dim=1),
             nn.Linear(in_features=width[-1],out_features=3)
         )

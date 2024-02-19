@@ -23,7 +23,7 @@ parser.add_argument("-e", "--epochs", type=int, default=2000,help="Number of tra
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
 parser.add_argument("--depth",nargs='+', type=int, help="Depth of each stage")
-parser.add_argument("--testsize", type=float, help="Depth of each stage")
+parser.add_argument("--testsize", type=float, default=.2, help="Depth of each stage")
 args = parser.parse_args()
 
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")

@@ -502,3 +502,43 @@ class RegNetX(nn.Module):
             return self.o[0:2](x)
         x = self.o(x)
         return x
+class YBlock(nn.Module):
+    def __init__(self,in_channels,out_channels) -> None:
+        super().__init__()
+        self.block = nn.Sequential(
+            nn.Conv1d(in_channels=in_channels,out_channels=out_channels,kernel_size=3,stride=1,padding='same',bias=False),
+            nn.ReLU()
+        )
+
+    def forward(self,x):
+        x = self.block(x)
+        return x
+        
+class RegNetY(nn.Module):
+    def __init__(self,depth,width,stem_kernel_size) -> None:
+        super().__init__()
+
+        self.stem = nn.Sequential(
+            nn.Conv1d(in_channels=1,out_channels=width[0],kernel_size=stem_kernel_size,stride=2,padding=stem_kernel_size//2,bias=False),
+            nn.MaxPool1d(kernel_size=2,stride=2),
+            nn.ReLU()
+        )
+
+        self.body = nn.Sequential()
+        for stage_i in range(len(width)):
+            for block_i in range(depth[stage_i]):
+                print(block_i)
+                self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=width[stage_i],out_channels=width[stage_i]))
+
+        self.classifier = nn.Sequential(
+            nn.AvgPool1d(kernel_size=1250),
+            nn.Flatten(start_dim=1),
+            nn.Linear(in_features=width[-1],out_features=3)
+        )
+
+    def forward(self,x):
+        x = x.view(-1,1,5000)
+        x = self.stem(x)
+        x = self.body(x)
+        x = self.classifier(x)
+        return x

@@ -14,4 +14,4 @@ for project in os.listdir(f'projects'):
     df[project] = pd.Series(CONFIG)
 df = df.T
 df = df.sort_index()
-print(df.sort_values(by='BEST_DEV_LOSS',ascending=True)[['BEST_DEV_LOSS','BEST_DEV_F1','DEPTHI','WIDTHI']])
+print(df.sort_values(by='BEST_DEV_LOSS',ascending=True)[['BEST_DEV_LOSS','BEST_DEV_F1','DEPTHI','WIDTHI','PARAMS','TEST_SIZE']])

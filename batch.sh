@@ -1,1 +1,1 @@
-python3 train_resnet.py --depth 4 --width 32 --fold 0
+python3 lstm.py --encoder projects/6 --sequence 9 --hidden 8 --layers 1 --frozen

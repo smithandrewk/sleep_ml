@@ -18,6 +18,7 @@ from torch.utils.tensorboard import SummaryWriter
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument('--random', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
+parser.add_argument('--weighted', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument('-o','--overwrite', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument("--epochs", type=int, default=2000,help="Number of training iterations")
 parser.add_argument("--device", type=int, default=0,help="Cuda device to select")
@@ -51,7 +52,7 @@ CONFIG = {
     'LEARNING_RATE':args.lr,
     'TEST_SIZE':args.testsize,
     'STEM_KERNEL_SIZE':3,
-    'WEIGHTED_LOSS':False
+    'WEIGHTED_LOSS':args.weighted
 }
 if CONFIG['DEVICE'] == 'cuda':
     DEVICE = f'{CONFIG["DEVICE"]}:{DEVICE_ID}'

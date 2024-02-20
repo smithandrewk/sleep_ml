@@ -23,14 +23,18 @@ parser.add_argument('-r','--resume', action='store_true', help="when this flag i
 parser.add_argument('-o','--overwrite', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
 parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
-parser.add_argument("--project", type=str, default='results',help="Cuda device to select")
-parser.add_argument("-w", "--window", type=int, default='5000',help="Cuda device to select")
-parser.add_argument("-n", "--ntraining", type=int, default='49',help="Number of blocks")
-parser.add_argument("--sequence", type=int, default='3',help="Number of blocks")
-parser.add_argument("-b", "--blocks",nargs='+', type=int, help="Number of blocks")
+parser.add_argument("--stride", type=int, default='50',help="Number of blocks")
 parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
 parser.add_argument("--depth",nargs='+', type=int, help="Number of blocks")
-
+parser.add_argument("--sequence", type=int, default='3',help="Number of blocks")
+parser.add_argument("--dropout", type=float, default='.5',help="Number of blocks")
+parser.add_argument("--encoder", type=str, default='.5',help="Number of blocks")
+parser.add_argument("--hidden", type=int, default='.5',help="Number of blocks")
+parser.add_argument("--layers", type=int, default=1,help="Number of blocks")
+parser.add_argument('--frozen', action='store_true', help="")
+parser.add_argument('--embedding', action='store_true', help="")
+parser.add_argument("--batch", type=int, default=256, help="Depth of each stage")
+parser.add_argument("--lr", type=float, default=3e-3, help="Depth of each stage")
 args = parser.parse_args()
 
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")
@@ -47,21 +51,17 @@ CONFIG = {
     'DEVLOSSI':[],
     'TRAINF1':[],
     'DEVF1':[],
-    'BATCH_SIZE':512,
-    'LEARNING_RATE':3e-4,
+    'BATCH_SIZE':args.batch,
+    'LEARNING_RATE':args.lr,
     'PROGRESS':0,
-    'WINDOW_SIZE':args.window,
-    'DEPTHI':args.depth,
-    'WIDTHI':args.width,
-    'N_TRAINING':args.ntraining,
-    'SEQUENCE_LENGTH':args.sequence
+    'SEQUENCE_LENGTH':args.sequence,
+    'ENCODER_PATH':args.encoder,
+    'HIDDEN_DIM':args.hidden,
+    'FROZEN':args.frozen,
+    'EMBEDDING':args.embedding,
+    'LAYERS':args.layers,
+    'DEVICE':'cuda',
 }
-if args.overwrite:
-    os.system(f'rm -rf projects/{args.project}')
-    os.system(f'rm -rf runs/{args.project}')
-
-PROJECT_DIR = f'projects/{args.project}'
-writer = SummaryWriter(f'runs/{args.project}')
 
 if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
@@ -72,31 +72,47 @@ from torch.utils.data import ConcatDataset
 from lib.ekyn import get_ekyn_ids
 from lib.models import Dumbledore
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
-trainloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
-devloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
-model = Dumbledore(encoder_path=f'projects/0',sequence_length=CONFIG['SEQUENCE_LENGTH'])
-criterion = nn.CrossEntropyLoss(weight=torch.tensor([18.3846,  2.2810,  1.9716])).to(DEVICE)
-optimizer = torch.optim.Adam(model.parameters(),lr=CONFIG['LEARNING_RATE'])
+trainloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
+devloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
+model = Dumbledore(encoder_path=CONFIG['ENCODER_PATH'],sequence_length=CONFIG['SEQUENCE_LENGTH'],hidden_dim=CONFIG['HIDDEN_DIM'],frozen=CONFIG['FROZEN'],embedding=CONFIG['EMBEDDING'],layers=CONFIG['LAYERS'])
+criterion = nn.CrossEntropyLoss().to(DEVICE)
+optimizer = torch.optim.AdamW(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 ## End Your Code Here ##
 
-print(model)
-print("Params: ", sum([p.flatten().size()[0] for p in list(model.parameters())]))
+CONFIG['PARAMS'] = sum([p.flatten().size()[0] for p in list(model.parameters())])
 CONFIG['MODEL'] = str(model)
 model.to(DEVICE)
+criterion.to(DEVICE)
+
+## Resume functionality
+PROJECTS_BASE = f'./projects'
 if RESUME:
+    # get last project
+    if not os.path.exists(PROJECTS_BASE):
+        raise FileNotFoundError(PROJECTS_BASE)
+    PROJECT_NAME = int(sorted(os.listdir(f'./projects'))[-1])
+    PROJECT_DIR = f'projects/{PROJECT_NAME}'
+
     if not os.path.exists(f'{PROJECT_DIR}/last.pt'):
-        raise Exception('cannot resume, last.pt does not exist')
+        raise FileNotFoundError(f'{PROJECT_DIR}/last.pt')
     model.load_state_dict(torch.load(f=f'{PROJECT_DIR}/last.pt', map_location='cpu'))
     optimizer.load_state_dict(torch.load(f=f'{PROJECT_DIR}/last.adam.pt',map_location='cpu'))
     with open(f'{PROJECT_DIR}/config.json','r') as f:
         CONFIG = json.load(f)
     CONFIG['PROGRESS'] = 0
 else:
-    if not OVERWRITE and os.path.exists(PROJECT_DIR):
-        print('project exists, resume or overwrite')
-        exit(0)
-    os.system(f'rm -rf {PROJECT_DIR}')
+    if not os.path.exists(PROJECTS_BASE):
+        print('projects directory dne, making')
+        os.makedirs(PROJECTS_BASE)
+        PROJECT_NAME = '0' # first project is always 0
+    else:
+        project_list_int = sorted([int(file) for file in os.listdir(PROJECTS_BASE)])
+        print(f'projects directory exists, finding last project name')
+        PROJECT_NAME = project_list_int[-1] + 1 # add 1 to the last project name
+    print(f'making project {PROJECT_NAME}')
+    PROJECT_DIR = f'projects/{PROJECT_NAME}'
     os.makedirs(PROJECT_DIR)
+    writer = SummaryWriter(f'runs/{PROJECT_NAME}')
 
 os.makedirs(f'{PROJECT_DIR}/{DATE}')
 
@@ -114,6 +130,7 @@ for epoch in pbar:
     CONFIG["DEVF1"].append(f1)
     writer.add_scalar('dev loss',loss,epoch)
     writer.add_scalar('dev f1',f1,epoch)
+
     CONFIG["LAST_EPOCH"] += 1
 
     torch.save(model.state_dict(), f=f'{PROJECT_DIR}/last.pt')

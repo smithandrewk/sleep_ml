@@ -24,7 +24,7 @@ class EpochedDatasetAnimalIdentifier(torch.utils.data.Dataset):
 class SequencedDataset(torch.utils.data.Dataset):
     def __init__(self,idx,condition,sequence_length):
         self.sequence_length = sequence_length
-        X,y = load_ekyn_pt(idx=idx,condition=condition)
+        X,y = load_ekyn_pt_robust_scaled(idx=idx,condition=condition)
         self.X = torch.cat([torch.zeros(sequence_length // 2,5000),X,torch.zeros(sequence_length // 2,5000)])
         self.y = y
 

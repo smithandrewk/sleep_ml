@@ -519,7 +519,6 @@ class YBlock(nn.Module):
         if out_channels > in_channels:
             stride = 2
             self.seq_len = seq_len // 2 if seq_len % 2 == 0 else seq_len // 2 + 1
-        print(self.seq_len)
         self.block = nn.Sequential(
             nn.Conv1d(in_channels=in_channels,out_channels=out_channels,kernel_size=3,stride=stride,padding=1,bias=False),
             nn.ReLU()
@@ -544,10 +543,10 @@ class RegNetY(nn.Module):
 
         self.body = nn.Sequential()
         for stage_i in range(len(width)):
-            print(f'stage {stage_i}, depth {depth[stage_i]}')
+            # print(f'stage {stage_i}, depth {depth[stage_i]}')
             for block_i in range(depth[stage_i]):
                 self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=width[0] if stage_i == 0 and block_i == 0 else self.body[-1].out_channels,out_channels=width[stage_i],seq_len=self.body[-1].seq_len if stage_i > 0 else 1250))
-                print(f'block {stage_i} {self.body[-1].in_channels} {self.body[-1].out_channels}')
+                # print(f'block {stage_i} {self.body[-1].in_channels} {self.body[-1].out_channels}')
 
         self.classifier = nn.Sequential(
             nn.AvgPool1d(kernel_size=self.body[-1].seq_len),
@@ -555,9 +554,11 @@ class RegNetY(nn.Module):
             nn.Linear(in_features=width[-1],out_features=3)
         )
 
-    def forward(self,x):
+    def forward(self,x,return_embedding=False):
         x = x.view(-1,1,5000)
         x = self.stem(x)
         x = self.body(x)
+        if return_embedding:
+            return self.classifier[0:2](x)
         x = self.classifier(x)
         return x

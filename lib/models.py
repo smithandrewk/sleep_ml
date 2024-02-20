@@ -510,43 +510,47 @@ class RegNetX(nn.Module):
         x = self.o(x)
         return x
 class YBlock(nn.Module):
-    def __init__(self,in_channels,out_channels,stride) -> None:
+    def __init__(self,in_channels,out_channels,seq_len) -> None:
         super().__init__()
+        stride = 1
+        self.seq_len = seq_len
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        if out_channels > in_channels:
+            stride = 2
+            self.seq_len = seq_len // 2 if seq_len % 2 == 0 else seq_len // 2 + 1
+        print(self.seq_len)
         self.block = nn.Sequential(
             nn.Conv1d(in_channels=in_channels,out_channels=out_channels,kernel_size=3,stride=stride,padding=1,bias=False),
             nn.ReLU()
+            
         )
-
+        self.identity = nn.Sequential(
+            nn.Conv1d(in_channels, out_channels, kernel_size=1, padding=0, stride=stride),
+            nn.ReLU()
+        ) if out_channels > in_channels else nn.Identity()
+        self.relu = nn.ReLU()
     def forward(self,x):
-        x = self.block(x)
+        x = self.relu(self.block(x) + self.identity(x))
         return x
 class RegNetY(nn.Module):
     def __init__(self,depth,width,stem_kernel_size) -> None:
         super().__init__()
-        print(depth,width)
         self.stem = nn.Sequential(
             nn.Conv1d(in_channels=1,out_channels=width[0],kernel_size=stem_kernel_size,stride=2,padding=stem_kernel_size//2,bias=False),
             nn.MaxPool1d(kernel_size=2,stride=2),
             nn.ReLU()
         )
 
-        sequence_length = 1250
-        in_channels = width[0]
         self.body = nn.Sequential()
         for stage_i in range(len(width)):
-            stride = 2
-            out_channels = width[stage_i]
-            sequence_length = math.ceil(sequence_length/2)
-            print(sequence_length)
             print(f'stage {stage_i}, depth {depth[stage_i]}')
             for block_i in range(depth[stage_i]):
-                print(f'block {stage_i} {in_channels} {out_channels}')
-                self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=in_channels,out_channels=out_channels,stride=stride))
-                in_channels = out_channels
-                stride = 1
+                self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=width[0] if stage_i == 0 and block_i == 0 else self.body[-1].out_channels,out_channels=width[stage_i],seq_len=self.body[-1].seq_len if stage_i > 0 else 1250))
+                print(f'block {stage_i} {self.body[-1].in_channels} {self.body[-1].out_channels}')
 
         self.classifier = nn.Sequential(
-            nn.AvgPool1d(kernel_size=sequence_length),
+            nn.AvgPool1d(kernel_size=self.body[-1].seq_len),
             nn.Flatten(start_dim=1),
             nn.Linear(in_features=width[-1],out_features=3)
         )

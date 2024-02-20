@@ -24,7 +24,7 @@ parser.add_argument("--device", type=int, default=0,help="Cuda device to select"
 parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
 parser.add_argument("--depth",nargs='+', type=int, help="Depth of each stage")
 parser.add_argument("--testsize", type=float, default=.25, help="Depth of each stage")
-parser.add_argument("--batch", type=float, default=256, help="Depth of each stage")
+parser.add_argument("--batch", type=int, default=256, help="Depth of each stage")
 parser.add_argument("--lr", type=float, default=3e-3, help="Depth of each stage")
 args = parser.parse_args()
 

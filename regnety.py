@@ -19,11 +19,13 @@ parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument('--random', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument('-o','--overwrite', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
-parser.add_argument("-e", "--epochs", type=int, default=2000,help="Number of training iterations")
-parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
+parser.add_argument("--epochs", type=int, default=2000,help="Number of training iterations")
+parser.add_argument("--device", type=int, default=0,help="Cuda device to select")
 parser.add_argument("--width",nargs='+', type=int, help="Number of blocks")
 parser.add_argument("--depth",nargs='+', type=int, help="Depth of each stage")
-parser.add_argument("--testsize", type=float, default=.2, help="Depth of each stage")
+parser.add_argument("--testsize", type=float, default=.25, help="Depth of each stage")
+parser.add_argument("--batch", type=float, default=256, help="Depth of each stage")
+parser.add_argument("--lr", type=float, default=3e-3, help="Depth of each stage")
 args = parser.parse_args()
 
 DATE = datetime.datetime.now().strftime("%Y-%d-%m_%H:%M")
@@ -33,6 +35,7 @@ EPOCHS = args.epochs
 DEVICE_ID = args.device
 
 CONFIG = {
+    'DEVICE':'cuda',
     'PATIENCE':500,
     'PROGRESS':0,
     'DEPTHI':args.depth,
@@ -44,9 +47,8 @@ CONFIG = {
     'DEVLOSSI':[],
     'TRAINF1':[],
     'DEVF1':[],
-    'BATCH_SIZE':1024,
-    'LEARNING_RATE':3e-2,
-    'DEVICE':'cuda',
+    'BATCH_SIZE':args.batch,
+    'LEARNING_RATE':args.lr,
     'TEST_SIZE':args.testsize,
     'STEM_KERNEL_SIZE':3,
     'WEIGHTED_LOSS':False
@@ -65,8 +67,8 @@ from lib.datasets import EpochedDataset
 
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=CONFIG['TEST_SIZE'],random_state=0)
 print(train_idx,test_idx)
-trainloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
-devloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=512,shuffle=True)
+trainloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
+devloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
 from lib.models import RegNetY
 model = RegNetY(depth=CONFIG['DEPTHI'],width=CONFIG['WIDTHI'],stem_kernel_size=CONFIG['STEM_KERNEL_SIZE'])
 if CONFIG['WEIGHTED_LOSS']:
@@ -124,12 +126,11 @@ for epoch in pbar:
     writer.add_scalar('train loss',loss,epoch)
     writer.add_scalar('train f1',f1,epoch)
 
-    if epoch % 20 == 0:
-        loss,f1 = development_loop(model=model,devloader=devloader,criterion=criterion,device=DEVICE)
-        CONFIG["DEVLOSSI"].append(loss)
-        CONFIG["DEVF1"].append(f1)
-        writer.add_scalar('dev loss',loss,epoch)
-        writer.add_scalar('dev f1',f1,epoch)
+    loss,f1 = development_loop(model=model,devloader=devloader,criterion=criterion,device=DEVICE)
+    CONFIG["DEVLOSSI"].append(loss)
+    CONFIG["DEVF1"].append(f1)
+    writer.add_scalar('dev loss',loss,epoch)
+    writer.add_scalar('dev f1',f1,epoch)
 
     CONFIG["LAST_EPOCH"] += 1
 

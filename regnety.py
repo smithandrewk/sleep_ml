@@ -127,11 +127,12 @@ for epoch in pbar:
     writer.add_scalar('train loss',loss,epoch)
     writer.add_scalar('train f1',f1,epoch)
 
-    loss,f1 = development_loop(model=model,devloader=devloader,criterion=criterion,device=DEVICE)
-    CONFIG["DEVLOSSI"].append(loss)
-    CONFIG["DEVF1"].append(f1)
-    writer.add_scalar('dev loss',loss,epoch)
-    writer.add_scalar('dev f1',f1,epoch)
+    if epoch % 2 == 0:
+        loss,f1 = development_loop(model=model,devloader=devloader,criterion=criterion,device=DEVICE)
+        CONFIG["DEVLOSSI"].append(loss)
+        CONFIG["DEVF1"].append(f1)
+        writer.add_scalar('dev loss',loss,epoch)
+        writer.add_scalar('dev f1',f1,epoch)
 
     CONFIG["LAST_EPOCH"] += 1
 

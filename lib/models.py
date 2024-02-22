@@ -406,6 +406,44 @@ class Dumbledore(nn.Module):
                 p.requires_grad = False
         return encoder
 
+class Dumbledorev2(nn.Module):
+    def __init__(self,encoder_path,sequence_length,batch_size,hidden_dim=8,frozen=True,embedding=False,layers=1) -> None:
+        super().__init__()
+        self.encoder_path = encoder_path
+        self.sequence_length = sequence_length
+        self.frozen = frozen
+        self.batch_size = batch_size
+        self.embedding = embedding
+        self.layers = layers
+        self.encoder = self.get_encoder()
+        if self.embedding:
+            self.latent_dim = self.ENCODER_CONFIG['WIDTHI'][-1]
+        else:
+            self.latent_dim = 3
+        self.lstm = nn.LSTM(self.latent_dim,hidden_dim,num_layers=self.layers,bidirectional=True,batch_first=True,dropout=.3)
+        self.fc1 = nn.Linear(hidden_dim*2,3)
+    def forward(self,x):
+        x = self.encoder(x,return_embedding=self.embedding)
+        x = x.unsqueeze(0)
+        cat = []
+        for i in range(0,(self.batch_size + 2*(self.sequence_length//2))-(self.sequence_length-1)):
+            cat.append(x[:,i:i+self.sequence_length,:])
+        x = torch.cat(cat,axis=0).float()
+        x = x.view(-1,self.sequence_length,self.latent_dim)
+        o,(h,c) = self.lstm(x)
+        x = self.fc1(o[:,-1])
+        return x
+    def get_encoder(self):
+        with open(f'{self.encoder_path}/config.json') as f:
+            self.ENCODER_CONFIG = json.load(f)
+        encoder = RegNetY(depth=self.ENCODER_CONFIG['DEPTHI'],width=self.ENCODER_CONFIG['WIDTHI'],stem_kernel_size=self.ENCODER_CONFIG['STEM_KERNEL_SIZE'])
+        encoder.load_state_dict(torch.load(f'{self.encoder_path}/best.f1.pt'))
+        if self.frozen:
+            print("Model is freezing encoder")
+            for p in encoder.parameters():
+                p.requires_grad = False
+        return encoder
+        
 def get_padding(l,out_l,k,s,d=1):
     if l % 2 == 0:
         return ((out_l-1)*s - l + d*(k-1))//2 + 1
@@ -543,10 +581,8 @@ class RegNetY(nn.Module):
 
         self.body = nn.Sequential()
         for stage_i in range(len(width)):
-            # print(f'stage {stage_i}, depth {depth[stage_i]}')
             for block_i in range(depth[stage_i]):
                 self.body.add_module(name=f'{stage_i}_{block_i}',module=YBlock(in_channels=width[0] if stage_i == 0 and block_i == 0 else self.body[-1].out_channels,out_channels=width[stage_i],seq_len=self.body[-1].seq_len if stage_i > 0 else 1250))
-                # print(f'block {stage_i} {self.body[-1].in_channels} {self.body[-1].out_channels}')
 
         self.classifier = nn.Sequential(
             nn.AvgPool1d(kernel_size=self.body[-1].seq_len),

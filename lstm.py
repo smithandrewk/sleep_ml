@@ -67,14 +67,14 @@ if DEVICE == 'cuda':
     DEVICE = f'{DEVICE}:{DEVICE_ID}'
 
 ## Your Code Here (trainloader,devloader,model,criterion,optimizer) ##
-from lib.datasets import SequencedDataset
+from lib.datasets import SequencedDatasetv2
 from torch.utils.data import ConcatDataset
 from lib.ekyn import get_ekyn_ids
-from lib.models import Dumbledore
+from lib.models import Dumbledorev2
 train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=.25,random_state=0)
-trainloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
-devloader = DataLoader(ConcatDataset([SequencedDataset(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH']) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
-model = Dumbledore(encoder_path=CONFIG['ENCODER_PATH'],sequence_length=CONFIG['SEQUENCE_LENGTH'],hidden_dim=CONFIG['HIDDEN_DIM'],frozen=CONFIG['FROZEN'],embedding=CONFIG['EMBEDDING'],layers=CONFIG['LAYERS'])
+trainloader = DataLoader(ConcatDataset([SequencedDatasetv2(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH'],batch_size=CONFIG['BATCH_SIZE']) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=1,shuffle=True)
+devloader = DataLoader(ConcatDataset([SequencedDatasetv2(idx=idx,condition=condition,sequence_length=CONFIG['SEQUENCE_LENGTH'],batch_size=CONFIG['BATCH_SIZE']) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=1,shuffle=True)
+model = Dumbledorev2(encoder_path=CONFIG['ENCODER_PATH'],sequence_length=CONFIG['SEQUENCE_LENGTH'],hidden_dim=CONFIG['HIDDEN_DIM'],frozen=CONFIG['FROZEN'],embedding=CONFIG['EMBEDDING'],layers=CONFIG['LAYERS'],batch_size=CONFIG['BATCH_SIZE'])
 criterion = nn.CrossEntropyLoss().to(DEVICE)
 optimizer = torch.optim.AdamW(model.parameters(),lr=CONFIG['LEARNING_RATE'])
 ## End Your Code Here ##

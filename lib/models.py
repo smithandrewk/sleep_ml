@@ -426,7 +426,8 @@ class Dumbledorev2(nn.Module):
         x = self.encoder(x,return_embedding=self.embedding)
         x = x.unsqueeze(0)
         cat = []
-        for i in range(0,(self.batch_size + 2*(self.sequence_length//2))-(self.sequence_length-1)):
+        # for i in range(0,(self.batch_size + 2*(self.sequence_length//2))-(self.sequence_length-1)):
+        for i in range(0,x.shape[1]-(self.sequence_length-1)):
             cat.append(x[:,i:i+self.sequence_length,:])
         x = torch.cat(cat,axis=0).float()
         x = x.view(-1,self.sequence_length,self.latent_dim)

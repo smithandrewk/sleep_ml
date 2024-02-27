@@ -53,8 +53,11 @@ class EpochedDataset(torch.utils.data.Dataset):
     """
     Dataset for training w1 resnets with ekyn data
     """
-    def __init__(self,idx,condition):
-        X,y = load_ekyn_pt(idx=idx,condition=condition)
+    def __init__(self,idx,condition,robust=True):
+        if robust:
+            X,y = load_ekyn_pt_robust_scaled(idx=idx,condition=condition)
+        else:
+            X,y = load_ekyn_pt(idx=idx,condition=condition)
         self.X = X
         self.y = y
         self.idx = idx

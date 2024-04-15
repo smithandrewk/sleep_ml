@@ -48,19 +48,24 @@ class SequencedDatasetv2(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         return (self.X[(idx*self.batch_size):(idx*self.batch_size)+self.sequence_length+(self.batch_size - 1)],self.y[(idx*self.batch_size):(idx*self.batch_size)+(self.batch_size)])
-# Jan 19
 class EpochedDataset(torch.utils.data.Dataset):
     """
     Dataset for training w1 resnets with ekyn data
     """
-    def __init__(self,idx,condition,robust=True):
-        if robust:
-            X,y = load_ekyn_pt_robust_scaled(idx=idx,condition=condition)
-        else:
-            X,y = load_ekyn_pt(idx=idx,condition=condition)
+    def __init__(self,dataset='ekyn',id='A1-1',condition='Vehicle',robust=True):
+        if dataset == 'ekyn':
+            if robust:
+                X,y = load_ekyn_pt_robust(id=id,condition=condition)
+            else:
+                X,y = load_ekyn_pt(id=id,condition=condition)
+        elif dataset == 'snezana_mice':
+            if robust:
+                X,y = load_snezana_mice_pt_robust(id=id)
+            else:
+                X,y = load_snezana_mice_pt(id=id)
         self.X = X
         self.y = y
-        self.idx = idx
+        self.id = id
 
     def __len__(self):
         return len(self.y)

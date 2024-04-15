@@ -1,3 +1,1 @@
-python3 lstm.py --encoder projects/6 --sequence 13 --hidden 64 --layers 1 --frozen &&
-python3 lstm.py --encoder projects/6 --sequence 13 --hidden 64 --layers 2 --frozen &&
-python3 lstm.py --encoder projects/6 --sequence 13 --hidden 64 --layers 3 --frozen
+python3 regnety_w_mice.py --depth 2 2 2 2 --width 8 16 32 64

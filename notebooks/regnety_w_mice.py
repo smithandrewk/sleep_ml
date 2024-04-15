@@ -66,10 +66,37 @@ from torch.utils.data import DataLoader,ConcatDataset
 from lib.ekyn import *
 from lib.datasets import EpochedDataset
 
-train_idx,test_idx = train_test_split(get_ekyn_ids(),test_size=CONFIG['TEST_SIZE'],random_state=0)
-print(train_idx,test_idx)
-trainloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in train_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
-devloader = DataLoader(ConcatDataset([EpochedDataset(idx=idx,condition=condition) for idx in test_idx for condition in ['Vehicle','PF']]),batch_size=CONFIG['BATCH_SIZE'],shuffle=True)
+snezana_mice_ids = get_snezana_mice_ids()
+ekyn_ids = get_ekyn_ids()
+
+trainloader = DataLoader(
+    ConcatDataset(
+        [
+            EpochedDataset(
+                dataset='ekyn',id=id,condition=condition
+                ) for id in ekyn_ids[:12] for condition in ['Vehicle','PF']
+        ] + 
+        [
+            EpochedDataset(
+                dataset='snezana_mice',id=id
+                ) for id in snezana_mice_ids[:12]
+        ]
+        ),batch_size=CONFIG['BATCH_SIZE'],shuffle=True
+    )
+devloader = DataLoader(
+    ConcatDataset(
+        [
+            EpochedDataset(
+                dataset='ekyn',id=id,condition=condition
+                ) for id in ekyn_ids[12:] for condition in ['Vehicle','PF']
+        ] + 
+        [
+            EpochedDataset(
+                dataset='snezana_mice',id=id
+                ) for id in snezana_mice_ids[12:16]
+        ]
+        ),batch_size=CONFIG['BATCH_SIZE'],shuffle=True
+    )
 from lib.models import RegNetY
 model = RegNetY(depth=CONFIG['DEPTHI'],width=CONFIG['WIDTHI'],stem_kernel_size=CONFIG['STEM_KERNEL_SIZE'])
 if CONFIG['WEIGHTED_LOSS']:

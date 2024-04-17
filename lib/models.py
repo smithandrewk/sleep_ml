@@ -40,7 +40,7 @@ class MLP(nn.Module):
         x = self.d4(x)
         x = self.fc4(x)
 
-        return x
+        return x.squeeze()
 
 class RecreatedMLPPSD(nn.Module):
     """

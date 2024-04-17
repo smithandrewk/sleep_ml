@@ -125,6 +125,8 @@ def get_recording_start_stop_zdb(filename):
     print(recording_start)
     print(recording_stop)
     return recording_start,recording_stop
+
+
 def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
     model.eval()
     model.to(DEVICE)
@@ -595,3 +597,22 @@ def plot_regnet(d,w,w_b):
     plt.ylabel('width')
     plt.gca().text(0.7, 0.4, f'd$_i$ = {[di for di in d]}\nw$_i$ = {[wi for wi in w]}', transform=plt.gca().transAxes, fontsize=10,
             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=1));
+
+def downsample(sig,factor):
+    n = len(sig)
+    sig = sig.flatten()
+    fs = 500  # Original sampling frequency
+    # Design a low-pass filter with a cutoff frequency of 50 Hz
+    nyq_rate = fs / 2.0
+    cutoff_hz = 50
+    width_hz = 5
+    ripple_db = 60  # Filter ripple in dB
+    N, beta = signal.kaiserord(ripple_db, width_hz / nyq_rate)
+    taps = signal.firwin(N, cutoff_hz / nyq_rate, window=('kaiser', beta))
+
+    # Use filtfilt to apply the FIR filter to the signal
+    filtered_signal = signal.filtfilt(taps, 1.0, sig)
+
+    # Downsample the signal by keeping every 5th sample
+    downsampled_signal = filtered_signal[::5]
+    return torch.from_numpy(downsampled_signal.reshape(n,-1).copy()).float()

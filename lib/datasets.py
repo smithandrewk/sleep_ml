@@ -52,17 +52,18 @@ class EpochedDataset(torch.utils.data.Dataset):
     """
     Dataset for training w1 resnets with ekyn data
     """
-    def __init__(self,dataset='ekyn',id='A1-1',condition='Vehicle',robust=True):
+    def __init__(self,dataset='ekyn',id='A1-1',condition='Vehicle',robust=True,downsampled=True):
         if dataset == 'ekyn':
             if robust:
-                X,y = load_ekyn_pt_robust(id=id,condition=condition)
+                X,y = load_ekyn_pt_robust(id=id,condition=condition,downsampled=downsampled)
             else:
                 X,y = load_ekyn_pt(id=id,condition=condition)
         elif dataset == 'snezana_mice':
             if robust:
-                X,y = load_snezana_mice_pt_robust(id=id)
+                X,y = load_snezana_mice_pt_robust(id=id,downsampled=downsampled)
             else:
                 X,y = load_snezana_mice_pt(id=id)
+
         self.X = X
         self.y = y
         self.id = id

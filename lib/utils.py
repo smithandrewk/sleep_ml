@@ -24,42 +24,6 @@ from torch import from_numpy,zeros
 from scipy.signal import resample
 # from lib.ekyn import load_eeg_label_pair,get_ekyn_ids
 
-def load_paired_list(ids):
-    X = []
-    y = []
-    for id,type in ids:
-        if type == 'ekyn':
-            for condition in ['Vehicle', 'PF']:
-                Xi,yi = load_eeg_label_pair(id,condition)
-                X.append(Xi)
-                y.append(yi)
-        else:
-            Xi,yi = load_snezana_mice(id)
-            X.append(Xi)
-            y.append(yi)
-    X = cat(X)
-    y = cat(y)
-    return X,y
-def get_merged_ekyn_snezana_mice_train_test_ids():
-    return [ekyn+snezana for ekyn,snezana in zip(train_test_split([(id,'ekyn') for id in get_ekyn_ids()],test_size=.25,random_state=0),train_test_split([(id,'snezana_mice') for id in get_snezana_mice_ids()],test_size=.25,random_state=0))]
-def get_snezana_mice_ids():
-    return sorted(set([file.split('.')[0] for file in os.listdir(SNEZANA_MICE_DIR)]))
-def load_snezana_mice(id):
-    return (torch.load(f'{SNEZANA_MICE_DIR}/{id}.X.pt'),torch.load(f'{SNEZANA_MICE_DIR}/{id}.y.pt'))
-def load_snezana_mice_list(ids):
-    X = []
-    y = []
-    for id in ids:
-        Xi,yi = load_snezana_mice(id)
-        X.append(Xi)
-        y.append(yi)
-    X = cat(X)
-    y = cat(y)
-    return X,y
-
-def get_courtney_ids():
-    return [filename.split(' ')[1] for filename in os.listdir(f'../data/courtney_aug_oct_2022_baseline_recordings/2_labels/')]
-
 def cm_grid(y_true,y_pred,save_path='cm.jpg'):
     fig,axes = plt.subplots(2,2,figsize=(5,5))
     sns.heatmap(confusion_matrix(y_true=y_true,y_pred=y_pred,normalize='true'),annot=True,fmt='.2f',cbar=False,ax=axes[0][0])
@@ -80,12 +44,6 @@ def cm_grid(y_true,y_pred,save_path='cm.jpg'):
     axes[1][1].set_xticklabels(['P','S','W'])
     plt.savefig(save_path,dpi=200,bbox_inches='tight')
 
-def metrics(y_true,y_pred):
-    return {
-        'precision':precision_score(y_true=y_true,y_pred=y_pred,average='macro'),
-        'recall':recall_score(y_true=y_true,y_pred=y_pred,average='macro'),
-        'f1':f1_score(y_true=y_true,y_pred=y_pred,average='macro')
-    }
 def fix_gaps(df):
     df = df.reset_index(drop=True)
     gaps = df[df['Start Time'].diff() > datetime.timedelta(seconds=10)]
@@ -125,30 +83,6 @@ def get_recording_start_stop_zdb(filename):
     print(recording_start)
     print(recording_stop)
     return recording_start,recording_stop
-
-
-def evaluate(dataloader,model,criterion,DEVICE=DEVICE):
-    model.eval()
-    model.to(DEVICE)
-    criterion.to(DEVICE)
-    with torch.no_grad():
-        y_true = torch.Tensor()
-        y_pred = torch.Tensor()
-        y_logits = torch.Tensor()
-        loss_total = 0
-        for (Xi,yi) in tqdm(dataloader):
-            yi = yi.reshape(-1,3)
-            y_true = torch.cat([y_true,yi.argmax(axis=1)])
-
-            Xi,yi = Xi.to(DEVICE),yi.to(DEVICE)
-            logits = model(Xi)
-            loss = criterion(logits,yi)
-            loss_total += loss.item()
-            
-            y_logits = torch.cat([y_logits,torch.softmax(logits,dim=1).detach().cpu()])
-            y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu()])
-    model.train()
-    return loss_total/len(dataloader),metrics(y_true,y_pred),y_true,y_pred,y_logits
 
 def window_epoched_signal(X,windowsize,zero_padding=True):
     """
@@ -413,48 +347,6 @@ def score_edf_lstm_aging(fileindex):
         os.system('mkdir aging_pred')
     df.to_csv(f'aging_pred/{fileindex}.csv',index=False)
     return df
-
-def training_loop(model,trainloader,criterion,optimizer,device):
-    model.train()
-    model.to(device)
-    y_true = []
-    y_pred = []
-    loss_tr_total = 0
-    for (X_tr,y_tr) in tqdm(trainloader,leave=False):
-        y_tr = y_tr.reshape(-1,3)
-        y_true.append(y_tr.argmax(axis=1).cpu())
-        X_tr,y_tr = X_tr.to(device),y_tr.to(device)
-        logits = model(X_tr)
-        loss = criterion(logits,y_tr)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        loss_tr_total += loss.item()
-        y_pred.append(torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu())
-    y_true = torch.cat(y_true)
-    y_pred = torch.cat(y_pred)
-    return loss_tr_total/len(trainloader),f1_score(y_true,y_pred,average='macro')
-
-def development_loop(model,devloader,criterion,device):
-    model.to(device)
-    model.eval()
-    with torch.no_grad():
-        y_true = []
-        y_pred = []
-        loss_dev_total = 0
-        for (X_dv,y_dv) in tqdm(devloader,leave=False):
-            y_dv = y_dv.reshape(-1,3)
-            y_true.append(y_dv.argmax(axis=1).cpu())
-            X_dv,y_dv = X_dv.to(device),y_dv.to(device)
-            logits = model(X_dv)
-            loss = criterion(logits,y_dv)
-            loss_dev_total += loss.item()
-            y_pred.append(torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu())
-        y_true = torch.cat(y_true)
-        y_pred = torch.cat(y_pred)
-
-        return loss_dev_total/len(devloader),f1_score(y_true,y_pred,average='macro')
-    
 def load_courtney(filename):
     fs = 500
     raw = read_raw_edf((f'../data/courtney_aug_oct_2022_baseline_recordings/1_raw_edf/{filename}.edf'),verbose=False)

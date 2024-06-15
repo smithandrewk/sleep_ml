@@ -1,2 +1,2 @@
-DATA_PATH = f'/home/andrew/aurora'
+DATA_PATH = f'/home/andrew'
 DEVICE='cuda'

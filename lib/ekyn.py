@@ -2,6 +2,7 @@ import os
 from torch import load
 from lib.env import DATA_PATH
 
+CONDITIONS = ['Vehicle','PF']
 def get_ekyn_ids():
     possible_datasets = ['pt_ekyn_robust_50hz']
     for possible_dataset in possible_datasets:

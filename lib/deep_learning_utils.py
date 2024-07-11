@@ -8,25 +8,23 @@ def count_params(model):
 def evaluate(dataloader,model,criterion,device='cuda'):
     model.eval()
     model.to(device)
-    criterion.to(device)
+    from tqdm import tqdm
     with torch.no_grad():
-        y_true = torch.Tensor()
-        y_pred = torch.Tensor()
-        y_logits = torch.Tensor()
         loss_total = 0
-        for (Xi,yi) in tqdm(dataloader):
-            yi = yi.reshape(-1,3)
-            y_true = torch.cat([y_true,yi.argmax(axis=1)])
-
+        y_true = []
+        y_pred = []
+        for Xi,yi in dataloader:
             Xi,yi = Xi.to(device),yi.to(device)
             logits = model(Xi)
             loss = criterion(logits,yi)
             loss_total += loss.item()
-            
-            y_logits = torch.cat([y_logits,torch.softmax(logits,dim=1).detach().cpu()])
-            y_pred = torch.cat([y_pred,torch.softmax(logits,dim=1).argmax(axis=1).detach().cpu()])
-    model.train()
-    return loss_total/len(dataloader),classification_report(y_true,y_pred),y_true,y_pred,y_logits
+
+            y_true.append(yi.argmax(axis=1).cpu())
+            y_pred.append(logits.softmax(dim=1).argmax(axis=1).cpu())
+    y_true = torch.cat(y_true)
+    y_pred = torch.cat(y_pred)
+
+    return loss_total / len(dataloader),y_true,y_pred
 
 def training_loop(model,trainloader,criterion,optimizer,device):
     model.train()

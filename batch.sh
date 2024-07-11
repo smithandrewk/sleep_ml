@@ -1,1 +1,0 @@
-python3 regnety_w_mice.py --depth 2 2 2 2 --width 8 16 32 64

@@ -26,7 +26,7 @@ class ResBlockv2(nn.Module):
         super(ResBlockv2, self).__init__()
         self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size, stride=stride, padding=1, bias=False)
         self.ln1 = ConvLayerNorm(out_channels) if norm == 'layer' else nn.BatchNorm1d(out_channels)
-        # self.dropout = nn.Dropout(p=.1)
+        self.dropout = nn.Dropout(p=.1)
 
         self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size, stride=1, padding=1, bias=False)
         self.ln2 = ConvLayerNorm(out_channels) if norm == 'layer' else nn.BatchNorm1d(out_channels)

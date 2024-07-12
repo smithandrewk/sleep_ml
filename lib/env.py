@@ -1,2 +1,2 @@
-DATA_PATH = f'/Users/andrew/sleep'
-DEVICE='mps'
+DATA_PATH = f'/media/andrew/T7/data'
+DEVICE='cuda'

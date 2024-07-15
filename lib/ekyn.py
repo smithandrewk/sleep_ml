@@ -54,14 +54,3 @@ class EpochedDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         return (self.X[idx:idx+1],self.y[idx])
-    
-from torch.utils.data import DataLoader,ConcatDataset
-def get_ratloader(ids=['A1-1']):
-    return DataLoader(
-        dataset=ConcatDataset(
-        [EpochedDataset(id=id,condition=condition,robust=True,downsampled=True) for id in ids for condition in CONDITIONS]
-        ),
-        batch_size=1024,
-        shuffle=True,
-        num_workers=0
-    )

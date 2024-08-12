@@ -54,3 +54,34 @@ class EpochedDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         return (self.X[idx:idx+1],self.y[idx])
+    
+def get_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False):
+    from sklearn.model_selection import train_test_split
+    ekyn_ids = get_ekyn_ids()
+
+    train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
+
+    from torch.utils.data import DataLoader,ConcatDataset
+    trainloader = DataLoader(
+            dataset=ConcatDataset(
+            [EpochedDataset(id=id,condition=condition,robust=True,downsampled=True) for id in train_ids for condition in CONDITIONS] 
+            ),
+            batch_size=batch_size,
+            shuffle=shuffle_train,
+            num_workers=1
+        )
+    testloader = DataLoader(
+            dataset=ConcatDataset(
+            [EpochedDataset(id=id,condition=condition,robust=True,downsampled=True) for id in test_ids for condition in CONDITIONS] 
+            ),
+            batch_size=batch_size,
+            shuffle=shuffle_test,
+            num_workers=1
+        )
+    print('train_ids',train_ids)
+    print('test_ids',test_ids)
+    print('n ids',len(ekyn_ids))
+    print(f'{len(trainloader)} training batches {len(testloader)} testing batches')
+    print(f'{len(trainloader)*batch_size} training samples {len(testloader)*batch_size} testing samples')
+    print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
+    return trainloader,testloader

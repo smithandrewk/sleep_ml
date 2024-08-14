@@ -1,2 +1,2 @@
-DATA_PATH = f'/media/andrew/T7/sleep_data'
+DATA_PATH = f'/home/andrew/sleep/data'
 DEVICE='cuda'

@@ -1,7 +1,7 @@
-# TODO : generator
-from lib.ekyn import get_dataloaders
+from lib.ekyn import get_epoched_dataloaders
 from sage.utils import *
 from sage.models import *
+from lib.env import *
 from time import time
 import datetime
 import copy
@@ -22,7 +22,7 @@ hyperparameters = {
     'epochs':500
 }
 
-trainloader,testloader = get_dataloaders(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'])
+trainloader,testloader = get_epoched_dataloaders(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'])
 model = ResNetv2(ResBlockv2,widthi=hyperparameters['widthi'],depthi=hyperparameters['depthi'],n_output_neurons=3,norm=hyperparameters['norm'],stem_kernel_size=hyperparameters['stem_kernel_size'],dropout=hyperparameters['dropout'])
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(model.parameters(),lr=hyperparameters['lr'],weight_decay=hyperparameters['wd'])
@@ -42,16 +42,16 @@ state = {
     'best_model_wts':copy.deepcopy(model.state_dict()),
 }
 
-os.makedirs(f'experiments/{state["start_time"]}')
-
 for key in hyperparameters:
     state[key] = hyperparameters[key]
 
 last_time = time()
 
+os.makedirs(f'{EXPERIMENTS_PATH}/{state["start_time"]}')
+
 for state in train(state,trainloader,testloader):
-    plot_loss(state)
+    plot_loss(state,EXPERIMENTS_PATH)
     state['execution_time'] = (state['execution_time'] + (time() - last_time))/2
     last_time = time()
-    torch.save(state, f'experiments/{state["start_time"]}/state.pt')
-torch.save(state, f'experiments/{state["start_time"]}/state.pt')
+    torch.save(state, f'{EXPERIMENTS_PATH}/{state["start_time"]}/state.pt')
+torch.save(state, f'{EXPERIMENTS_PATH}/{state["start_time"]}/state.pt')

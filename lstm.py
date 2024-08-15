@@ -7,8 +7,6 @@ from time import time
 import datetime
 import copy
 import os
-from sage.models import Dumbledore
-from lib.ekyn import *
 
 experiment_group_id = 'lstm'
 hyperparameters = {
@@ -16,6 +14,7 @@ hyperparameters = {
     'lr':3e-4,
     'batch_size':2048,
     'robust':False,
+    'bidirectional':True,
     'norm':'batch',
     'dropout':.1,
     'stem_kernel_size':3,
@@ -24,15 +23,28 @@ hyperparameters = {
     'patience':100,
     'scheduler_patience':50,
     'epochs':500,
-    'sequence_length':21,
-    'encoder_experiment_name':f'2024_14_08_16_04_12',
+    'sequence_length':5,
+    'training_stride':10,
+    'encoder_experiment_name':f'2024_15_08_16_07_11',
     'hidden_size':64,
     'num_layers':1,
     'frozen_encoder':True
 }
 
-trainloader,testloader = get_sequenced_dataloaders(batch_size=hyperparameters['batch_size'],sequence_length=hyperparameters['sequence_length'])
-model = Dumbledore(encoder_experiment_name=f'{EXPERIMENTS_PATH}/{hyperparameters["encoder_experiment_name"]}',sequence_length=hyperparameters['sequence_length'],hidden_size=hyperparameters['hidden_size'],num_layers=hyperparameters['num_layers'],dropout=hyperparameters['dropout'],frozen_encoder=hyperparameters['frozen_encoder'])
+trainloader,testloader = get_sequenced_dataloaders(
+    batch_size=hyperparameters['batch_size'],
+    sequence_length=hyperparameters['sequence_length'],
+    training_stride=hyperparameters['training_stride']
+    )
+model = Dumbledore(
+    encoder_experiment_name=f'{EXPERIMENTS_PATH}/{hyperparameters["encoder_experiment_name"]}',
+    sequence_length=hyperparameters['sequence_length'],
+    hidden_size=hyperparameters['hidden_size'],
+    num_layers=hyperparameters['num_layers'],
+    dropout=hyperparameters['dropout'],
+    frozen_encoder=hyperparameters['frozen_encoder'],
+    bidirectional=hyperparameters['bidirectional']
+    )
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(model.parameters(),lr=hyperparameters['lr'],weight_decay=hyperparameters['wd'])
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=hyperparameters['scheduler_patience'])
@@ -52,6 +64,8 @@ state = {
     'best_model_wts':copy.deepcopy(model.state_dict()),
 }
 
+print(state['start_time'])
+print(count_params(model))
 for key in hyperparameters:
     state[key] = hyperparameters[key]
 

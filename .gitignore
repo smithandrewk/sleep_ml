@@ -28,3 +28,4 @@ aging*
 windowed
 lib/__pycache__
 env
+sage/

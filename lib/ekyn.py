@@ -22,7 +22,7 @@ def get_ekyn_ids():
     return None
 
 def load_ekyn_pt(id,condition):
-    return load(f'{DATA_PATH}/pt_ekyn/{id}_{condition}.pt')
+    return load(f'{DATA_PATH}/pt_ekyn/{id}_{condition}.pt',weights_only=False)
 
 def load_ekyn_pt_robust(id,condition,downsampled):
     if downsampled:
@@ -57,37 +57,7 @@ class EpochedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         return (self.X[idx:idx+1],self.y[idx])
 
-class SequencedDatasetv2(torch.utils.data.Dataset):
-    def __init__(self, id, condition, sequence_length, stride=1):
-        self.sequence_length = sequence_length
-        # X, y = load_ekyn_pt_robust(id=id, condition=condition, downsampled=True)
-        X,y = load_ekyn_pt(id=id,condition=condition)
-        
-        # Assuming X.shape is (num_samples, num_features) and y.shape is (num_samples, num_classes)
-        num_features = X.shape[1]
-        num_classes = y.shape[1]
-        
-        # Pad the sequence
-        self.X = torch.cat([torch.zeros(sequence_length // 2, num_features), X, torch.zeros(sequence_length // 2, num_features)]).unsqueeze(1)
-        self.y = torch.cat([torch.zeros(sequence_length // 2, num_classes), y, torch.zeros(sequence_length // 2, num_classes)])
-        
-        self.stride = stride
-        self.sequences = []
-        self.labels = []
-        for i in range(0, len(self.y) - sequence_length, stride):
-            self.sequences.append(self.X[i:i + sequence_length])
-            self.labels.append(self.y[i + sequence_length // 2])
-        
-        self.sequences = torch.stack(self.sequences)
-        self.labels = torch.stack(self.labels)
-        
-    def __len__(self):
-        return len(self.labels)
-    
-    def __getitem__(self, idx):
-        return self.sequences[idx], self.labels[idx]
-    
-def get_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True):
+def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True):
     ekyn_ids = get_ekyn_ids()
 
     train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
@@ -117,16 +87,29 @@ def get_epoched_dataloader_for_ids(ids=['A1-1'],batch_size=512,shuffle=True,robu
             num_workers=1
         )
 
-def get_sequenced_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False,sequence_length=3,stride=1):
-    from sklearn.model_selection import train_test_split
-    ekyn_ids = get_ekyn_ids()
+## Sequenced Data
+class SequencedDatasetInMemory(torch.utils.data.Dataset):
+    def __init__(self,id,condition,sequence_length):
+        self.sequence_length = sequence_length
+        self.id = id
+        self.condition = condition
+        self.X,self.y = load_ekyn_pt(id=id,condition=condition)
+        self.num_features,self.num_classes = self.X.shape[1],self.y.shape[1]
+        self.X = torch.cat([torch.zeros(self.sequence_length // 2, self.num_features), self.X, torch.zeros(sequence_length // 2, self.num_features)]).unsqueeze(1)
+        self.y = torch.cat([torch.zeros(self.sequence_length // 2, self.num_classes), self.y, torch.zeros(sequence_length // 2, self.num_classes)])
+    def __len__(self):
+        return self.X.shape[0] - self.sequence_length + 1
+    def __getitem__(self,idx):
+        idx = idx + self.sequence_length // 2
+        return self.X[idx-(self.sequence_length // 2):idx+(self.sequence_length // 2)+1],self.y[idx]
 
+def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False):
+    ekyn_ids = get_ekyn_ids()
     train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
 
-    from torch.utils.data import DataLoader,ConcatDataset
     trainloader = DataLoader(
             dataset=ConcatDataset(
-            [SequencedDatasetv2(id=id,condition=condition,sequence_length=sequence_length,stride=stride) for id in train_ids for condition in ['Vehicle','PF']] 
+            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length) for id in train_ids for condition in ['Vehicle','PF']] 
             ),
             batch_size=batch_size,
             shuffle=shuffle_train,
@@ -134,10 +117,23 @@ def get_sequenced_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=Fal
         )
     testloader = DataLoader(
             dataset=ConcatDataset(
-            [SequencedDatasetv2(id=id,condition=condition,sequence_length=sequence_length,stride=1) for id in test_ids for condition in ['Vehicle','PF']] 
+            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length) for id in test_ids for condition in ['Vehicle','PF']] 
             ),
             batch_size=batch_size,
             shuffle=shuffle_test,
             num_workers=1
         )
     return trainloader,testloader
+def get_sequenced_dataloader_for_ids(ids=['A1-1'],sequence_length=3,batch_size=512,shuffle=True,condition=None):
+    if condition is not None:
+        conditions = [condition]
+    else:
+        conditions = CONDITIONS
+    return DataLoader(
+            dataset=ConcatDataset(
+            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length) for id in ids for condition in conditions] 
+            ),
+            batch_size=batch_size,
+            shuffle=shuffle,
+            num_workers=1
+        )

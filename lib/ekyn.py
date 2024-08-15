@@ -87,10 +87,10 @@ def get_epoched_dataloader_for_ids(ids=['A1-1'],batch_size=512,shuffle=True,robu
             num_workers=1
         )
 
-## Sequenced Data
 class SequencedDatasetInMemory(torch.utils.data.Dataset):
-    def __init__(self,id,condition,sequence_length):
+    def __init__(self,id,condition,sequence_length,stride=1):
         self.sequence_length = sequence_length
+        self.stride = stride
         self.id = id
         self.condition = condition
         self.X,self.y = load_ekyn_pt(id=id,condition=condition)
@@ -98,18 +98,18 @@ class SequencedDatasetInMemory(torch.utils.data.Dataset):
         self.X = torch.cat([torch.zeros(self.sequence_length // 2, self.num_features), self.X, torch.zeros(sequence_length // 2, self.num_features)]).unsqueeze(1)
         self.y = torch.cat([torch.zeros(self.sequence_length // 2, self.num_classes), self.y, torch.zeros(sequence_length // 2, self.num_classes)])
     def __len__(self):
-        return self.X.shape[0] - self.sequence_length + 1
+        return (self.X.shape[0] - self.sequence_length + 1) // self.stride
     def __getitem__(self,idx):
-        idx = idx + self.sequence_length // 2
+        idx = self.stride*idx + self.sequence_length // 2
         return self.X[idx-(self.sequence_length // 2):idx+(self.sequence_length // 2)+1],self.y[idx]
 
-def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False):
+def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1):
     ekyn_ids = get_ekyn_ids()
     train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
 
     trainloader = DataLoader(
             dataset=ConcatDataset(
-            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length) for id in train_ids for condition in ['Vehicle','PF']] 
+            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length,stride=training_stride) for id in train_ids for condition in ['Vehicle','PF']] 
             ),
             batch_size=batch_size,
             shuffle=shuffle_train,

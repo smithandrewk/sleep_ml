@@ -6,13 +6,17 @@ from time import time
 import datetime
 import copy
 import os
+import argparse
 
+parser = argparse.ArgumentParser(description='Training program')
+parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
+args = parser.parse_args()
 
 hyperparameters = {
     'experiment_group_id':'encoder',
     'wd':1e-2,
     'lr':3e-4,
-    'batch_size':1024,
+    'batch_size':2048,
     'robust':False,
     'norm':'batch',
     'dropout':.1,
@@ -21,6 +25,7 @@ hyperparameters = {
     'depthi':[2,2,2,2],
     'patience':100,
     'epochs':500,
+    'device':f'cuda:{args.device}',
 }
 
 trainloader,testloader = get_epoched_dataloaders(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'])
@@ -32,7 +37,6 @@ scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', fa
 state = {
     'start_time':datetime.datetime.now().strftime("%Y_%d_%m_%H_%M_%S"),
     'execution_time':0,
-    'device':'cuda',
     'trainlossi':[],
     'testlossi':[],
     'best_dev_loss':torch.inf,

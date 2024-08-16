@@ -9,14 +9,15 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser(description='Training program')
-parser.add_argument("-d", "--device", type=int, default=0,help="Cuda device to select")
+parser.add_argument("--device", type=int, default=0,help="Cuda device to select")
+parser.add_argument("--batch", type=int, default=512,help="Batch Size")
 args = parser.parse_args()
 
 hyperparameters = {
     'experiment_group_id':'encoder',
     'wd':1e-2,
     'lr':3e-4,
-    'batch_size':2048,
+    'batch_size':args.batch,
     'robust':False,
     'norm':'batch',
     'dropout':.1,

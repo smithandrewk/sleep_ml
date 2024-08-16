@@ -7,19 +7,20 @@ import datetime
 import copy
 import os
 
+
 hyperparameters = {
-    'experiment_group_id':'downsampling',
+    'experiment_group_id':'encoder',
     'wd':1e-2,
     'lr':3e-4,
-    'batch_size':512,
+    'batch_size':1024,
     'robust':False,
     'norm':'batch',
     'dropout':.1,
     'stem_kernel_size':3,
-    'widthi':[16,32,64,128],
-    'depthi':[1,1,1,1],
+    'widthi':[4,8,16,32],
+    'depthi':[2,2,2,2],
     'patience':100,
-    'epochs':500
+    'epochs':500,
 }
 
 trainloader,testloader = get_epoched_dataloaders(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'])

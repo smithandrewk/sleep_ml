@@ -17,9 +17,10 @@ def get_leave_one_out_cv_ids_for_ekyn():
         ret.append((train_ids, [test_id]))
     return ret
 
-def load_eeg_label_pair(id,condition):
+def load_eeg_label_pair(id,condition,zero_pad):
     X,y = torch.load(f'{DATASET_PATH}/{id}_{condition}.pt',weights_only=False)
-    X = torch.cat([torch.zeros(WINDOW_SIZE//2,5000),X,torch.zeros(WINDOW_SIZE//2,5000)])
+    if zero_pad:
+        X = torch.cat([torch.zeros(WINDOW_SIZE//2,5000),X,torch.zeros(WINDOW_SIZE//2,5000)])
     return (X,y)
 
 def evaluate(dataloader,model,criterion,device='mps'):

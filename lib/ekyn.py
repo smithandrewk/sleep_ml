@@ -148,6 +148,8 @@ def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train
 
     trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
     testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
-
+    
+    print('train_ids',train_ids)
+    print('test_ids',test_ids)
     return trainloader,testloader
 

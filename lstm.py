@@ -13,24 +13,23 @@ experiment_group_id = 'lstm'
 hyperparameters = {
     'wd':1e-2,
     'lr':3e-4,
-    'batch_size':2048,
-    'robust':False,
-    'bidirectional':True,
+    'batch_size':512,
     'norm':'batch',
     'dropout':.1,
     'stem_kernel_size':3,
-    'widthi':[4,8,16,32],
-    'depthi':[1,1,1,1],
     'patience':25,
     'scheduler_patience':20,
     'epochs':500,
-    'sequence_length':3,
-    'encoder_experiment_name':f'2024_22_08_17_10_52',
-    'hidden_size':64,
+    'sequence_length':9,
+    'encoder_experiment_name':f'2024_26_08_14_13_14',
+    'hidden_size':32,
     'num_layers':1,
+    'fold':0,
+    'robust':False,
+    'bidirectional':False,
     'frozen_encoder':True,
-    'device':'cuda:0',
-    'fold':0
+    'use_embedding':True,
+    'device':'cuda:0'
 }
 
 trainloader,testloader = get_sequenced_dataloaders_loo(
@@ -45,7 +44,8 @@ model = Dumbledore(
     num_layers=hyperparameters['num_layers'],
     dropout=hyperparameters['dropout'],
     frozen_encoder=hyperparameters['frozen_encoder'],
-    bidirectional=hyperparameters['bidirectional']
+    bidirectional=hyperparameters['bidirectional'],
+    use_embedding=hyperparameters['use_embedding']
     )
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(model.parameters(),lr=hyperparameters['lr'],weight_decay=hyperparameters['wd'])

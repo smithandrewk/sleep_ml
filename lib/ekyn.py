@@ -4,6 +4,7 @@ from lib.env import DATA_PATH
 import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader,ConcatDataset
+from lib.utils import get_leave_one_out_cv_ids_for_ekyn
 
 CONDITIONS = ['Vehicle','PF']
 def get_ekyn_ids():
@@ -88,10 +89,8 @@ def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False
     return trainloader,testloader
 
 def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0):
-    train_ids = get_ekyn_ids()
-    test_ids = [train_ids[fold]]
-    del train_ids[fold]
-    print(train_ids,test_ids)
+    folds = get_leave_one_out_cv_ids_for_ekyn()
+    train_ids,test_ids = folds[fold]
 
     trainloader = get_epoched_dataloader_for_ids(ids=train_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
     testloader = get_epoched_dataloader_for_ids(ids=test_ids,batch_size=batch_size,shuffle=shuffle_test,robust=robust)
@@ -102,8 +101,6 @@ def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=F
     print(f'{len(trainloader)*batch_size} training samples {len(testloader)*batch_size} testing samples')
     print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
     return trainloader,testloader
-
-
 
 class SequencedDatasetInMemory(torch.utils.data.Dataset):
     def __init__(self,id,condition,sequence_length,stride=1):
@@ -146,10 +143,8 @@ def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=Tru
     return trainloader,testloader
 
 def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,fold=0):
-    train_ids = get_ekyn_ids()
-    test_ids = [train_ids[fold]]
-    del train_ids[fold]
-    print(train_ids,test_ids)
+    folds = get_leave_one_out_cv_ids_for_ekyn()
+    train_ids,test_ids = folds[fold]
 
     trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
     testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)

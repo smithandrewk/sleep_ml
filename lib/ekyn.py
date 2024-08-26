@@ -57,6 +57,20 @@ class EpochedDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         return (self.X[idx:idx+1],self.y[idx])
 
+def get_epoched_dataloader_for_ids(ids=['A1-1'],batch_size=512,shuffle=True,robust=True,condition=None):
+    if condition is not None:
+        conditions = [condition]
+    else:
+        conditions = CONDITIONS
+    return DataLoader(
+            dataset=ConcatDataset(
+            [EpochedDataset(id=id,condition=condition,robust=robust,downsampled=True) for id in ids for condition in conditions] 
+            ),
+            batch_size=batch_size,
+            shuffle=shuffle,
+            num_workers=1
+        )
+
 def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True):
     ekyn_ids = get_ekyn_ids()
 
@@ -73,19 +87,23 @@ def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False
     print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
     return trainloader,testloader
 
-def get_epoched_dataloader_for_ids(ids=['A1-1'],batch_size=512,shuffle=True,robust=True,condition=None):
-    if condition is not None:
-        conditions = [condition]
-    else:
-        conditions = CONDITIONS
-    return DataLoader(
-            dataset=ConcatDataset(
-            [EpochedDataset(id=id,condition=condition,robust=robust,downsampled=True) for id in ids for condition in conditions] 
-            ),
-            batch_size=batch_size,
-            shuffle=shuffle,
-            num_workers=1
-        )
+def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0):
+    train_ids = get_ekyn_ids()
+    test_ids = [train_ids[fold]]
+    del train_ids[fold]
+    print(train_ids,test_ids)
+
+    trainloader = get_epoched_dataloader_for_ids(ids=train_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
+    testloader = get_epoched_dataloader_for_ids(ids=test_ids,batch_size=batch_size,shuffle=shuffle_test,robust=robust)
+    
+    print('train_ids',train_ids)
+    print('test_ids',test_ids)
+    print(f'{len(trainloader)} training batches {len(testloader)} testing batches')
+    print(f'{len(trainloader)*batch_size} training samples {len(testloader)*batch_size} testing samples')
+    print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
+    return trainloader,testloader
+
+
 
 class SequencedDatasetInMemory(torch.utils.data.Dataset):
     def __init__(self,id,condition,sequence_length,stride=1):
@@ -102,28 +120,7 @@ class SequencedDatasetInMemory(torch.utils.data.Dataset):
     def __getitem__(self,idx):
         idx = self.stride*idx + self.sequence_length // 2
         return self.X[idx-(self.sequence_length // 2):idx+(self.sequence_length // 2)+1],self.y[idx]
-
-def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1):
-    ekyn_ids = get_ekyn_ids()
-    train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
-
-    trainloader = DataLoader(
-            dataset=ConcatDataset(
-            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length,stride=training_stride) for id in train_ids for condition in ['Vehicle','PF']] 
-            ),
-            batch_size=batch_size,
-            shuffle=shuffle_train,
-            num_workers=1
-        )
-    testloader = DataLoader(
-            dataset=ConcatDataset(
-            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length) for id in test_ids for condition in ['Vehicle','PF']] 
-            ),
-            batch_size=batch_size,
-            shuffle=shuffle_test,
-            num_workers=1
-        )
-    return trainloader,testloader
+    
 def get_sequenced_dataloader_for_ids(ids=['A1-1'],sequence_length=3,batch_size=512,shuffle=True,condition=None):
     if condition is not None:
         conditions = [condition]
@@ -137,3 +134,25 @@ def get_sequenced_dataloader_for_ids(ids=['A1-1'],sequence_length=3,batch_size=5
             shuffle=shuffle,
             num_workers=1
         )
+
+def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1):
+    ekyn_ids = get_ekyn_ids()
+
+    train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
+
+    trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
+    testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
+
+    return trainloader,testloader
+
+def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,fold=0):
+    train_ids = get_ekyn_ids()
+    test_ids = [train_ids[fold]]
+    del train_ids[fold]
+    print(train_ids,test_ids)
+
+    trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
+    testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
+
+    return trainloader,testloader
+

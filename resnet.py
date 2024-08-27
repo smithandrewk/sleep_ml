@@ -20,23 +20,43 @@ hyperparameters = {
     'lr':3e-4,
     'batch_size':args.batch,
     'robust':False,
-    'norm':'batch',
+    'norm':'layer',
     'dropout':.1,
     'stem_kernel_size':3,
-    'widthi':[4,8,16],
-    'depthi':[2,2,2],
+    'widthi':[4],
+    'depthi':[2],
     'patience':100,
     'epochs':500,
     'device':f'cuda:{args.device}',
     'fold':0
 }
 
-trainloader,testloader = get_epoched_dataloaders_loo(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'],fold=hyperparameters['fold'])
-# trainloader,testloader = get_epoched_dataloaders(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'])
-model = ResNetv2(ResBlockv2,widthi=hyperparameters['widthi'],depthi=hyperparameters['depthi'],n_output_neurons=3,norm=hyperparameters['norm'],stem_kernel_size=hyperparameters['stem_kernel_size'],dropout=hyperparameters['dropout'])
+# trainloader,testloader = get_epoched_dataloaders_loo(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'],fold=hyperparameters['fold'])
+trainloader,testloader = get_epoched_dataloaders(
+    batch_size=hyperparameters['batch_size'],
+    robust=hyperparameters['robust']
+    )
+model = ResNetv2(
+    ResBlockv2,
+    widthi=hyperparameters['widthi'],
+    depthi=hyperparameters['depthi'],
+    n_output_neurons=3,
+    norm=hyperparameters['norm'],
+    stem_kernel_size=hyperparameters['stem_kernel_size'],
+    dropout=hyperparameters['dropout']
+    )
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.AdamW(model.parameters(),lr=hyperparameters['lr'],weight_decay=hyperparameters['wd'])
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=50)
+optimizer = torch.optim.AdamW(
+    params=model.parameters(),
+    lr=hyperparameters['lr'],
+    weight_decay=hyperparameters['wd']
+    )
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+    optimizer=optimizer,
+    mode='min',
+    factor=0.5,
+    patience=50
+    )
 
 state = {
     'start_time':datetime.datetime.now().strftime("%Y_%d_%m_%H_%M_%S"),

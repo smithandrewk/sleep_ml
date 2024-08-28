@@ -3,9 +3,28 @@ from torch import load
 from lib.env import DATA_PATH
 import torch
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader,ConcatDataset
+from torch.utils.data import DataLoader,ConcatDataset,TensorDataset
+from random import seed, shuffle
+from tqdm import tqdm
+from lib.env import *
+import os
+import torch
 
 CONDITIONS = ['Vehicle','PF']
+
+def get_ids():
+    return sorted([id.split("_")[0] for id in os.listdir(DATASET_PATH) if "PF" in id])
+
+def get_leave_one_out_cv_ids_for_ekyn():
+    ids = get_ids()
+    seed(0)
+    shuffle(ids)
+    ret = []
+    for test_id in ids:
+        train_ids = [x for x in ids if x != test_id]
+        ret.append((train_ids, [test_id]))
+    return ret
+
 def get_ekyn_ids():
     possible_datasets = ['pt_ekyn_robust_50hz','pt_ekyn']
     for possible_dataset in possible_datasets:
@@ -88,10 +107,8 @@ def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False
     return trainloader,testloader
 
 def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0):
-    train_ids = get_ekyn_ids()
-    test_ids = [train_ids[fold]]
-    del train_ids[fold]
-    print(train_ids,test_ids)
+    folds = get_leave_one_out_cv_ids_for_ekyn()
+    train_ids,test_ids = folds[fold]
 
     trainloader = get_epoched_dataloader_for_ids(ids=train_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
     testloader = get_epoched_dataloader_for_ids(ids=test_ids,batch_size=batch_size,shuffle=shuffle_test,robust=robust)
@@ -103,7 +120,17 @@ def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=F
     print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
     return trainloader,testloader
 
-
+def get_epoched_dataloaders_shuffle_split(batch_size=512,test_size=.2):
+    Xys = [load_ekyn_pt_robust(id,condition,True) for id in get_ekyn_ids() for condition in ['Vehicle','PF']]
+    Xs = [Xy[0] for Xy in Xys]
+    ys = [Xy[1] for Xy in Xys]
+    del Xys
+    X = torch.cat(Xs).unsqueeze(1)
+    y = torch.cat(ys)
+    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=test_size,shuffle=True,random_state=0)
+    trainloader = DataLoader(TensorDataset(X_train,y_train),shuffle=True,batch_size=batch_size)
+    testloader = DataLoader(TensorDataset(X_test,y_test),shuffle=True,batch_size=batch_size)
+    return trainloader,testloader
 
 class SequencedDatasetInMemory(torch.utils.data.Dataset):
     def __init__(self,id,condition,sequence_length,stride=1):
@@ -146,13 +173,12 @@ def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=Tru
     return trainloader,testloader
 
 def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,fold=0):
-    train_ids = get_ekyn_ids()
-    test_ids = [train_ids[fold]]
-    del train_ids[fold]
-    print(train_ids,test_ids)
+    folds = get_leave_one_out_cv_ids_for_ekyn()
+    train_ids,test_ids = folds[fold]
 
     trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
     testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
-
+    
+    print('train_ids',train_ids)
+    print('test_ids',test_ids)
     return trainloader,testloader
-

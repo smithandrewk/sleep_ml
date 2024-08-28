@@ -1,5 +1,5 @@
 # TODO: add best model epoch
-from lib.ekyn import get_epoched_dataloaders,get_epoched_dataloaders_loo
+from lib.ekyn import get_epoched_dataloaders,get_epoched_dataloaders_loo,get_epoched_dataloaders_shuffle_split
 from sage.utils import *
 from sage.models import *
 from lib.env import *
@@ -15,16 +15,16 @@ parser.add_argument("--batch", type=int, default=512,help="Batch Size")
 args = parser.parse_args()
 
 hyperparameters = {
-    'experiment_group_id':'encoder',
+    'experiment_group_id':'chillin',
     'wd':1e-2,
     'lr':3e-4,
     'batch_size':args.batch,
     'robust':False,
     'norm':'layer',
-    'dropout':.1,
+    'dropout':.5,
     'stem_kernel_size':3,
-    'widthi':[4],
-    'depthi':[2],
+    'widthi':[64,128,256,512],
+    'depthi':[2,2,2,2],
     'patience':100,
     'epochs':500,
     'device':f'cuda:{args.device}',
@@ -32,10 +32,16 @@ hyperparameters = {
 }
 
 # trainloader,testloader = get_epoched_dataloaders_loo(batch_size=hyperparameters['batch_size'],robust=hyperparameters['robust'],fold=hyperparameters['fold'])
-trainloader,testloader = get_epoched_dataloaders(
+# trainloader,testloader = get_epoched_dataloaders(
+#     batch_size=hyperparameters['batch_size'],
+#     robust=hyperparameters['robust']
+#     )
+
+trainloader,testloader = get_epoched_dataloaders_shuffle_split(
     batch_size=hyperparameters['batch_size'],
-    robust=hyperparameters['robust']
+    test_size=.2
     )
+
 model = ResNetv2(
     ResBlockv2,
     widthi=hyperparameters['widthi'],

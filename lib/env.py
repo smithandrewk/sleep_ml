@@ -1,5 +1,6 @@
 DATA_PATH = f'/home/andrew/sleep/data'
 EXPERIMENTS_PATH = f'/home/andrew/sleep/experiments'
+TMP_EXPERIMENTS_PATH = f'./exp'
 BEAST_EXPERIMENTS_PATH = f'/home/andrew/sleep/experiments_beast'
 BEAUTY_EXPERIMENTS_PATH = f'/home/andrew/sleep/experiments_beauty'
 DEVICE='cuda'

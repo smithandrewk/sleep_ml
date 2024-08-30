@@ -88,7 +88,7 @@ def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False
     print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
     return trainloader,testloader
 
-def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0):
+def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0,dev_set=True,**kwargs):
     folds = get_leave_one_out_cv_ids_for_ekyn()
     train_ids,test_ids = folds[fold]
 
@@ -103,12 +103,17 @@ def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=F
     return trainloader,testloader
 
 class SequencedDatasetInMemory(torch.utils.data.Dataset):
-    def __init__(self,id,condition,sequence_length,stride=1):
+    def __init__(self,robust,id,condition,sequence_length,stride=1):
         self.sequence_length = sequence_length
         self.stride = stride
         self.id = id
         self.condition = condition
-        self.X,self.y = load_ekyn_pt(id=id,condition=condition)
+
+        if robust:
+            self.X,self.y = load_ekyn_pt_robust(id=id,condition=condition,downsampled=True)
+        else:
+            self.X,self.y = load_ekyn_pt(id=id,condition=condition)
+
         self.num_features,self.num_classes = self.X.shape[1],self.y.shape[1]
         self.X = torch.cat([torch.zeros(self.sequence_length // 2, self.num_features), self.X, torch.zeros(sequence_length // 2, self.num_features)]).unsqueeze(1)
         self.y = torch.cat([torch.zeros(self.sequence_length // 2, self.num_classes), self.y, torch.zeros(sequence_length // 2, self.num_classes)])
@@ -118,38 +123,37 @@ class SequencedDatasetInMemory(torch.utils.data.Dataset):
         idx = self.stride*idx + self.sequence_length // 2
         return self.X[idx-(self.sequence_length // 2):idx+(self.sequence_length // 2)+1],self.y[idx]
     
-def get_sequenced_dataloader_for_ids(ids=['A1-1'],sequence_length=3,batch_size=512,shuffle=True,condition=None):
+def get_sequenced_dataloader_for_ids(robust,ids=['A1-1'],sequence_length=3,batch_size=512,shuffle=True,condition=None):
     if condition is not None:
         conditions = [condition]
     else:
         conditions = CONDITIONS
     return DataLoader(
             dataset=ConcatDataset(
-            [SequencedDatasetInMemory(id=id,condition=condition,sequence_length=sequence_length) for id in ids for condition in conditions] 
+            [SequencedDatasetInMemory(robust=robust,id=id,condition=condition,sequence_length=sequence_length) for id in ids for condition in conditions] 
             ),
             batch_size=batch_size,
             shuffle=shuffle,
             num_workers=1
         )
 
-def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1):
+def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,robust=True):
     ekyn_ids = get_ekyn_ids()
 
     train_ids,test_ids = train_test_split(ekyn_ids,test_size=.2,shuffle=True,random_state=0)
 
-    trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
-    testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
+    trainloader = get_sequenced_dataloader_for_ids(robust=robust,ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
+    testloader = get_sequenced_dataloader_for_ids(robust=robust,ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
 
     return trainloader,testloader
 
-def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,fold=0):
+def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,fold=0,robust=True,**kwargs):
     folds = get_leave_one_out_cv_ids_for_ekyn()
     train_ids,test_ids = folds[fold]
 
-    trainloader = get_sequenced_dataloader_for_ids(ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
-    testloader = get_sequenced_dataloader_for_ids(ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
+    trainloader = get_sequenced_dataloader_for_ids(robust=robust,ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
+    testloader = get_sequenced_dataloader_for_ids(robust=robust,ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
     
     print('train_ids',train_ids)
     print('test_ids',test_ids)
     return trainloader,testloader
-

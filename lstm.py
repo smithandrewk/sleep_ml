@@ -16,37 +16,23 @@ hyperparameters = {
     'batch_size':512,
     'norm':'batch',
     'dropout':.1,
-    'stem_kernel_size':3,
     'patience':25,
     'scheduler_patience':20,
     'epochs':500,
     'sequence_length':9,
-    'encoder_experiment_name':f'2024_26_08_14_13_14',
+    'encoder_experiment_name':f'{EXPERIMENTS_PATH}/2024_29_08_13_04_17',
     'hidden_size':32,
     'num_layers':1,
     'fold':0,
-    'robust':False,
+    'robust':True,
     'bidirectional':False,
     'frozen_encoder':True,
     'use_embedding':True,
     'device':'cuda:0'
 }
 
-trainloader,testloader = get_sequenced_dataloaders_loo(
-    batch_size=hyperparameters['batch_size'],
-    sequence_length=hyperparameters['sequence_length'],
-    fold=hyperparameters['fold']
-    )
-model = Dumbledore(
-    encoder_experiment_name=f'{EXPERIMENTS_PATH}/{hyperparameters["encoder_experiment_name"]}',
-    sequence_length=hyperparameters['sequence_length'],
-    hidden_size=hyperparameters['hidden_size'],
-    num_layers=hyperparameters['num_layers'],
-    dropout=hyperparameters['dropout'],
-    frozen_encoder=hyperparameters['frozen_encoder'],
-    bidirectional=hyperparameters['bidirectional'],
-    use_embedding=hyperparameters['use_embedding']
-    )
+trainloader,testloader = get_sequenced_dataloaders_loo(**hyperparameters)
+model = Dumbledore(**hyperparameters)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.AdamW(model.parameters(),lr=hyperparameters['lr'],weight_decay=hyperparameters['wd'])
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=hyperparameters['scheduler_patience'])

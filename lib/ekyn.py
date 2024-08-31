@@ -91,16 +91,21 @@ def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False
 def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0,dev_set=True,**kwargs):
     folds = get_leave_one_out_cv_ids_for_ekyn()
     train_ids,test_ids = folds[fold]
+    if dev_set:
+        dev_ids = [train_ids[-1]]
+        del train_ids[-1]
+        devloader = get_epoched_dataloader_for_ids(ids=dev_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
 
     trainloader = get_epoched_dataloader_for_ids(ids=train_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
     testloader = get_epoched_dataloader_for_ids(ids=test_ids,batch_size=batch_size,shuffle=shuffle_test,robust=robust)
     
     print('train_ids',train_ids)
+    print('dev_ids',dev_ids)
     print('test_ids',test_ids)
-    print(f'{len(trainloader)} training batches {len(testloader)} testing batches')
-    print(f'{len(trainloader)*batch_size} training samples {len(testloader)*batch_size} testing samples')
-    print(f'{len(trainloader)*batch_size*10/3600:.2f} training hours {len(testloader)*batch_size*10/3600:.2f} testing hours')
-    return trainloader,testloader
+    
+    if dev_set:
+        return {'trainloader':trainloader,'devloader':devloader,'testloader':testloader}
+    return {'trainloader':trainloader,'testloader':testloader}
 
 class SequencedDatasetInMemory(torch.utils.data.Dataset):
     def __init__(self,robust,id,condition,sequence_length,stride=1):
@@ -157,3 +162,9 @@ def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train
     print('train_ids',train_ids)
     print('test_ids',test_ids)
     return trainloader,testloader
+
+def get_dataloaders(dataloaders,robust,**kwargs):
+    if robust:
+        print("Getting Downsampled Data at 100 Hz!")
+    if dataloaders=='leave_one_out':
+        return get_epoched_dataloaders_loo(**kwargs)

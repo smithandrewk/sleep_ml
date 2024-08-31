@@ -4,6 +4,13 @@ from sage.models import *
 from lib.env import *
 import datetime
 import copy
+import argparse
+
+parser = argparse.ArgumentParser(description='Training program')
+parser.add_argument("--device", type=int, default=0,help="Cuda Device")
+parser.add_argument("--batch", type=int, default=512,help="Batch Size")
+parser.add_argument("--fold", type=int, default=0,help="Testing Fold")
+args = parser.parse_args()
 
 for (widthi,depthi) in [
     ([64],[2]),
@@ -15,7 +22,7 @@ for (widthi,depthi) in [
         'experiment_group_id':'encoder',
         'weight_decay':1e-2,
         'lr':3e-4,
-        'batch_size':512,
+        'batch_size':args.batch,
         'robust':True,
         'norm':'layer',
         'dropout':.1,
@@ -25,10 +32,10 @@ for (widthi,depthi) in [
         'n_output_neurons':3,
         'patience':100,
         'epochs':500,
-        'device':f'cuda',
+        'device':f'cuda:{args.device}',
         'dataloaders':'leave_one_out',
         'dev_set':True,
-        'fold':0
+        'fold':args.fold
     }
 
     dataloaders = get_dataloaders(**hyperparameters)

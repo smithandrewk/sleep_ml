@@ -92,8 +92,8 @@ def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=F
     folds = get_leave_one_out_cv_ids_for_ekyn()
     train_ids,test_ids = folds[fold]
     if dev_set:
-        dev_ids = [train_ids[0]]
-        del train_ids[0]
+        dev_ids = [train_ids[fold-1]]
+        del train_ids[fold-1]
         devloader = get_epoched_dataloader_for_ids(ids=dev_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
 
     trainloader = get_epoched_dataloader_for_ids(ids=train_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)

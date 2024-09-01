@@ -91,7 +91,7 @@ def get_epoched_dataloaders(batch_size=512,shuffle_train=True,shuffle_test=False
 def get_epoched_dataloaders_loo(batch_size=512,shuffle_train=True,shuffle_test=False,robust=True,fold=0,dev_set=True,**kwargs):
     folds = get_leave_one_out_cv_ids_for_ekyn()
     train_ids,test_ids = folds[fold]
-    if dev_set:
+    if dev_set:  
         dev_ids = [train_ids[fold-1]]
         del train_ids[fold-1]
         devloader = get_epoched_dataloader_for_ids(ids=dev_ids,batch_size=batch_size,shuffle=shuffle_train,robust=robust)
@@ -152,19 +152,32 @@ def get_sequenced_dataloaders(batch_size=512,sequence_length=3,shuffle_train=Tru
 
     return trainloader,testloader
 
-def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,training_stride=1,fold=0,robust=True,**kwargs):
+def get_sequenced_dataloaders_loo(batch_size=512,sequence_length=3,shuffle_train=True,shuffle_test=False,fold=0,robust=True,dev_set=True,**kwargs):
     folds = get_leave_one_out_cv_ids_for_ekyn()
     train_ids,test_ids = folds[fold]
+    if dev_set:  
+        dev_ids = [train_ids[fold-1]]
+        del train_ids[fold-1]
+        devloader = get_sequenced_dataloader_for_ids(robust=robust,ids=dev_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
+
 
     trainloader = get_sequenced_dataloader_for_ids(robust=robust,ids=train_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_train)
     testloader = get_sequenced_dataloader_for_ids(robust=robust,ids=test_ids,sequence_length=sequence_length,batch_size=batch_size,shuffle=shuffle_test)
     
     print('train_ids',train_ids)
+    print('dev_ids',dev_ids)
     print('test_ids',test_ids)
-    return trainloader,testloader
+    
+    if dev_set:
+        return {'trainloader':trainloader,'devloader':devloader,'testloader':testloader}
+    return {'trainloader':trainloader,'testloader':testloader}
 
 def get_dataloaders(dataloaders,robust,**kwargs):
     if robust:
         print("Getting Downsampled Data at 100 Hz!")
-    if dataloaders=='leave_one_out':
+    if dataloaders=='leave_one_out_epoched':
         return get_epoched_dataloaders_loo(**kwargs)
+    elif dataloaders == 'leave_one_out_sequenced':
+        return get_sequenced_dataloaders_loo(**kwargs)
+    else:
+        raise NotImplementedError()

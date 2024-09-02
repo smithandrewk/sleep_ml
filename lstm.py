@@ -5,6 +5,13 @@ from sage.models import *
 import datetime
 import copy
 import os
+import argparse
+
+parser = argparse.ArgumentParser(description='Training program')
+parser.add_argument("--device", type=int, default=0,help="Cuda Device")
+parser.add_argument("--batch", type=int, default=512,help="Batch Size")
+parser.add_argument("--fold", type=int, default=0,help="Testing Fold")
+args = parser.parse_args()
 
 for encoder in [25]:
     hyperparameters = {
@@ -25,7 +32,7 @@ for encoder in [25]:
         'bidirectional':False,
         'dev_set':True,
         'frozen_encoder':True,
-        'device':'cuda:0'
+        'device':f'cuda:{args.device}'
     }
 
     dataloaders = get_dataloaders(**hyperparameters)

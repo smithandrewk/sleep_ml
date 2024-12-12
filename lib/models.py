@@ -1,8 +1,6 @@
+import torch
 from torch import nn
 from torch.nn.functional import relu
-import torch
-from lib.env import *
-
 class ResidualBlock(nn.Module):
     def __init__(self,in_feature_maps,out_feature_maps,n_features) -> None:
         super().__init__()
@@ -39,13 +37,14 @@ class ResidualBlock(nn.Module):
         x = relu(x)
         
         return x
+    
 class Frodo(nn.Module):
-    def __init__(self,n_features,device='cuda') -> None:
+    def __init__(self,n_features) -> None:
         super().__init__()
         self.n_features = n_features
-        self.block1 = ResidualBlock(1,8,n_features).to(device)
-        self.block2 = ResidualBlock(8,16,n_features).to(device)
-        self.block3 = ResidualBlock(16,16,n_features).to(device)
+        self.block1 = ResidualBlock(1,8,n_features)
+        self.block2 = ResidualBlock(8,16,n_features)
+        self.block3 = ResidualBlock(16,16,n_features)
 
         self.gap = nn.AvgPool1d(kernel_size=n_features)
         self.fc1 = nn.Linear(in_features=16,out_features=3)
@@ -60,19 +59,20 @@ class Frodo(nn.Module):
             return x
         else:
             return x.squeeze()
-
+        
 class Gandalf(nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.encoder = Frodo(n_features=5000,device=DEVICE).to(DEVICE)
+        self.encoder = Frodo(n_features=5000)
         self.lstm = nn.LSTM(16,32,bidirectional=True)
         self.fc1 = nn.Linear(64,3)
     def forward(self,x_2d,classification=True):
         x_2d = x_2d.view(-1,9,1,5000)
-        x = torch.Tensor().to(DEVICE)
+        x = []
         for t in range(x_2d.size(1)):
             xi = self.encoder(x_2d[:,t,:,:],classification=False)
-            x = torch.cat([x,xi.unsqueeze(0)],dim=0)
+            x.append(xi.unsqueeze(0))
+        x = torch.cat(x)
         out,_ = self.lstm(x)
         if(classification):
             x = self.fc1(out[-1])

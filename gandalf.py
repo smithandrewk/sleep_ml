@@ -6,19 +6,17 @@ description:
 """
 import json
 import argparse
-from datetime import datetime
 import os
-
 import matplotlib.pyplot as plt
 import torch
 from tqdm import tqdm
+from torch import nn
+from torch.nn.functional import relu
 
 from lib.utils import *
-from lib.models import Frodo
 from lib.ekyn import *
-from lib.datasets import *
+from lib.models import Gandalf
 
-# argparse
 parser = argparse.ArgumentParser(description='Training program')
 parser.add_argument('-r','--resume', action='store_true', help="when this flag is used, we will resume optimization from existing model in the workdir")
 parser.add_argument("-e", "--epochs", type=int, default=1000,help="Number of training iterations")
@@ -27,40 +25,13 @@ parser.add_argument("-f", "--fold", type=str, default=0,help="Fold from 0-15")
 args = parser.parse_args()
 
 FOLD = int(args.fold)
-current_date = str(datetime.now()).replace(' ','_')
-project_dir = f'gandalf_{FOLD}'
-PATIENCE = 30
-lr = 3e-4
-batch_size = 32
-DEVICE = f'cuda:{args.device}' if torch.cuda.is_available() else "mps" if torch.has_mps else "cpu"
 
-print(f'device: {DEVICE}')
-
-class Gandalf(nn.Module):
-    def __init__(self) -> None:
-        super().__init__()
-        self.encoder = Frodo(n_features=5000,device=DEVICE).to(DEVICE)
-        self.lstm = nn.LSTM(16,32,bidirectional=True)
-        self.fc1 = nn.Linear(64,3)
-    def forward(self,x_2d,classification=True):
-        x_2d = x_2d.view(-1,9,1,5000)
-        x = torch.Tensor().to(DEVICE)
-        for t in range(x_2d.size(1)):
-            xi = self.encoder(x_2d[:,t,:,:],classification=False)
-            x = torch.cat([x,xi.unsqueeze(0)],dim=0)
-        out,_ = self.lstm(x)
-        if(classification):
-            x = self.fc1(out[-1])
-        else:
-            x = out[-1]
-        return x
 model = Gandalf()
 
 config = {
     'MODEL':str(model),
     'BATCH_SIZE':batch_size,
     'EPOCHS':args.epochs,
-    'RESUME':args.resume,
     'START_TIME':current_date,
     'LEARNING_RATE':lr,
     'PATIENCE':PATIENCE,
@@ -87,20 +58,6 @@ print(f'devloader: {len(devloader)} batches')
 
 params = sum([p.flatten().size()[0] for p in list(model.parameters())])
 print("Params: ",params)
-
-if(config['RESUME']):
-    print("Resuming previous training")
-    if os.path.exists(f'{project_dir}/last_model.pt'):
-        model.load_state_dict(torch.load(f=f'{project_dir}/last_model.pt',map_location='cpu'))
-    else:
-        print("Model file does not exist.")
-        print("Exiting because resume flag was given and model does not exist. Either remove resume flag or move model to directory.")
-        exit(0)
-    with open(f'{project_dir}/config.json','r') as f:
-        previous_config = json.load(f)
-    config['START_EPOCH'] = previous_config['END_EPOCH'] + 1
-    config['BEST_DEV_LOSS'] = previous_config['BEST_DEV_LOSS']
-    config['BEST_MODEL_EPOCH'] = previous_config['BEST_MODEL_EPOCH']
 
 config['END_EPOCH'] = config['START_EPOCH'] + config['EPOCHS'] - 1
 

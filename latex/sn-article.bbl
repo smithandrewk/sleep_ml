@@ -1,0 +1,732 @@
+%% BioMed_Central_Bib_Style_v1.01
+
+\begin{thebibliography}{41}
+% BibTex style file: bmc-mathphys.bst (version 2.1), 2014-07-24
+\ifx \bisbn   \undefined \def \bisbn  #1{ISBN #1}\fi
+\ifx \binits  \undefined \def \binits#1{#1}\fi
+\ifx \bauthor  \undefined \def \bauthor#1{#1}\fi
+\ifx \batitle  \undefined \def \batitle#1{#1}\fi
+\ifx \bjtitle  \undefined \def \bjtitle#1{#1}\fi
+\ifx \bvolume  \undefined \def \bvolume#1{\textbf{#1}}\fi
+\ifx \byear  \undefined \def \byear#1{#1}\fi
+\ifx \bissue  \undefined \def \bissue#1{#1}\fi
+\ifx \bfpage  \undefined \def \bfpage#1{#1}\fi
+\ifx \blpage  \undefined \def \blpage #1{#1}\fi
+\ifx \burl  \undefined \def \burl#1{\textsf{#1}}\fi
+\ifx \doiurl  \undefined \def \doiurl#1{\url{https://doi.org/#1}}\fi
+\ifx \betal  \undefined \def \betal{\textit{et al.}}\fi
+\ifx \binstitute  \undefined \def \binstitute#1{#1}\fi
+\ifx \binstitutionaled  \undefined \def \binstitutionaled#1{#1}\fi
+\ifx \bctitle  \undefined \def \bctitle#1{#1}\fi
+\ifx \beditor  \undefined \def \beditor#1{#1}\fi
+\ifx \bpublisher  \undefined \def \bpublisher#1{#1}\fi
+\ifx \bbtitle  \undefined \def \bbtitle#1{#1}\fi
+\ifx \bedition  \undefined \def \bedition#1{#1}\fi
+\ifx \bseriesno  \undefined \def \bseriesno#1{#1}\fi
+\ifx \blocation  \undefined \def \blocation#1{#1}\fi
+\ifx \bsertitle  \undefined \def \bsertitle#1{#1}\fi
+\ifx \bsnm \undefined \def \bsnm#1{#1}\fi
+\ifx \bsuffix \undefined \def \bsuffix#1{#1}\fi
+\ifx \bparticle \undefined \def \bparticle#1{#1}\fi
+\ifx \barticle \undefined \def \barticle#1{#1}\fi
+\bibcommenthead
+\ifx \bconfdate \undefined \def \bconfdate #1{#1}\fi
+\ifx \botherref \undefined \def \botherref #1{#1}\fi
+\ifx \url \undefined \def \url#1{\textsf{#1}}\fi
+\ifx \bchapter \undefined \def \bchapter#1{#1}\fi
+\ifx \bbook \undefined \def \bbook#1{#1}\fi
+\ifx \bcomment \undefined \def \bcomment#1{#1}\fi
+\ifx \oauthor \undefined \def \oauthor#1{#1}\fi
+\ifx \citeauthoryear \undefined \def \citeauthoryear#1{#1}\fi
+\ifx \endbibitem  \undefined \def \endbibitem {}\fi
+\ifx \bconflocation  \undefined \def \bconflocation#1{#1}\fi
+\ifx \arxivurl  \undefined \def \arxivurl#1{\textsf{#1}}\fi
+\csname PreBibitemsHook\endcsname
+
+%%% 1
+\bibitem[\protect\citeauthoryear{Cirelli and Tononi}{2008}]{cirelli_is_2008}
+\begin{barticle}
+\bauthor{\bsnm{Cirelli}, \binits{C.}},
+\bauthor{\bsnm{Tononi}, \binits{G.}}:
+\batitle{Is sleep essential?}
+\bjtitle{PLoS biology}
+\bvolume{6}(\bissue{8}),
+\bfpage{216}
+(\byear{2008})
+\doiurl{10.1371/journal.pbio.0060216}
+\end{barticle}
+\endbibitem
+
+%%% 2
+\bibitem[\protect\citeauthoryear{Jahrami et~al.}{2021}]{jahrami_sleep_2021}
+\begin{barticle}
+\bauthor{\bsnm{Jahrami}, \binits{H.}},
+\bauthor{\bsnm{BaHammam}, \binits{A.S.}},
+\bauthor{\bsnm{Bragazzi}, \binits{N.L.}},
+\bauthor{\bsnm{Saif}, \binits{Z.}},
+\bauthor{\bsnm{Faris}, \binits{M.}},
+\bauthor{\bsnm{Vitiello}, \binits{M.V.}}:
+\batitle{Sleep problems during the {COVID}-19 pandemic by population: a systematic review and meta-analysis}.
+\bjtitle{Journal of clinical sleep medicine: JCSM: official publication of the American Academy of Sleep Medicine}
+\bvolume{17}(\bissue{2}),
+\bfpage{299}--\blpage{313}
+(\byear{2021})
+\doiurl{10.5664/jcsm.8930}
+\end{barticle}
+\endbibitem
+
+%%% 3
+\bibitem[\protect\citeauthoryear{Graves et~al.}{2003}]{graves_sleep_2003}
+\begin{barticle}
+\bauthor{\bsnm{Graves}, \binits{L.A.}},
+\bauthor{\bsnm{Heller}, \binits{E.A.}},
+\bauthor{\bsnm{Pack}, \binits{A.I.}},
+\bauthor{\bsnm{Abel}, \binits{T.}}:
+\batitle{Sleep deprivation selectively impairs memory consolidation for contextual fear conditioning}.
+\bjtitle{Learning \& Memory (Cold Spring Harbor, N.Y.)}
+\bvolume{10}(\bissue{3}),
+\bfpage{168}--\blpage{176}
+(\byear{2003})
+\doiurl{10.1101/lm.48803}
+\end{barticle}
+\endbibitem
+
+%%% 4
+\bibitem[\protect\citeauthoryear{Rentschler et~al.}{2024}]{rentschler_reducing_2024}
+\begin{barticle}
+\bauthor{\bsnm{Rentschler}, \binits{K.M.}},
+\bauthor{\bsnm{Milosavljevic}, \binits{S.}},
+\bauthor{\bsnm{Baratta}, \binits{A.M.}},
+\bauthor{\bsnm{Wright}, \binits{C.J.}},
+\bauthor{\bsnm{Piroli}, \binits{M.V.}},
+\bauthor{\bsnm{Tentor}, \binits{Z.}},
+\bauthor{\bsnm{Valafar}, \binits{H.}},
+\bauthor{\bsnm{O'Reilly}, \binits{C.}},
+\bauthor{\bsnm{Pocivavsek}, \binits{A.}}:
+\batitle{Reducing brain kynurenic acid synthesis precludes kynurenine-induced sleep disturbances}.
+\bjtitle{Journal of Sleep Research}
+\bvolume{33}(\bissue{3}),
+\bfpage{14038}
+(\byear{2024})
+\doiurl{10.1111/jsr.14038}
+\end{barticle}
+\endbibitem
+
+%%% 5
+\bibitem[\protect\citeauthoryear{Siegel}{2022}]{siegel_sleep_2022}
+\begin{barticle}
+\bauthor{\bsnm{Siegel}, \binits{J.M.}}:
+\batitle{Sleep function: an evolutionary perspective}.
+\bjtitle{The Lancet. Neurology}
+\bvolume{21}(\bissue{10}),
+\bfpage{937}--\blpage{946}
+(\byear{2022})
+\doiurl{10.1016/S1474-4422(22)00210-1}
+\end{barticle}
+\endbibitem
+
+%%% 6
+\bibitem[\protect\citeauthoryear{Wright et~al.}{2023}]{wright_stress_2023}
+\begin{barticle}
+\bauthor{\bsnm{Wright}, \binits{C.J.}},
+\bauthor{\bsnm{Milosavljevic}, \binits{S.}},
+\bauthor{\bsnm{Pocivavsek}, \binits{A.}}:
+\batitle{The stress of losing sleep: {Sex}-specific neurobiological outcomes}.
+\bjtitle{Neurobiology of Stress}
+\bvolume{24},
+\bfpage{100543}
+(\byear{2023})
+\doiurl{10.1016/j.ynstr.2023.100543}
+\end{barticle}
+\endbibitem
+
+%%% 7
+\bibitem[\protect\citeauthoryear{Rayan et~al.}{2024}]{rayan_sleep_2024}
+\begin{barticle}
+\bauthor{\bsnm{Rayan}, \binits{A.}},
+\bauthor{\bsnm{Agarwal}, \binits{A.}},
+\bauthor{\bsnm{Samanta}, \binits{A.}},
+\bauthor{\bsnm{Severijnen}, \binits{E.}},
+\bauthor{\bsnm{Meij}, \binits{J.}},
+\bauthor{\bsnm{Genzel}, \binits{L.}}:
+\batitle{Sleep scoring in rodents: {Criteria}, automatic approaches and outstanding issues}.
+\bjtitle{The European Journal of Neuroscience}
+\bvolume{59}(\bissue{4}),
+\bfpage{526}--\blpage{553}
+(\byear{2024})
+\doiurl{10.1111/ejn.15884}
+\end{barticle}
+\endbibitem
+
+%%% 8
+\bibitem[\protect\citeauthoryear{Rattenborg and Ungurean}{2023}]{rattenborg_evolution_2023}
+\begin{barticle}
+\bauthor{\bsnm{Rattenborg}, \binits{N.C.}},
+\bauthor{\bsnm{Ungurean}, \binits{G.}}:
+\batitle{The evolution and diversification of sleep}.
+\bjtitle{Trends in Ecology \& Evolution}
+\bvolume{38}(\bissue{2}),
+\bfpage{156}--\blpage{170}
+(\byear{2023})
+\doiurl{10.1016/j.tree.2022.10.004}
+\end{barticle}
+\endbibitem
+
+%%% 9
+\bibitem[\protect\citeauthoryear{Miladinovic et~al.}{2019}]{miladinovic_spindle_2019}
+\begin{barticle}
+\bauthor{\bsnm{Miladinovic}, \binits{D.}},
+\bauthor{\bsnm{Muheim}, \binits{C.}},
+\bauthor{\bsnm{Bauer}, \binits{S.}},
+\bauthor{\bsnm{Spinnler}, \binits{A.}},
+\bauthor{\bsnm{Noain}, \binits{D.}},
+\bauthor{\bsnm{Bandarabadi}, \binits{M.}},
+\bauthor{\bsnm{Gallusser}, \binits{B.}},
+\bauthor{\bsnm{Krummenacher}, \binits{G.}},
+\bauthor{\bsnm{Baumann}, \binits{C.}},
+\bauthor{\bsnm{Adamantidis}, \binits{A.}},
+\bauthor{\bsnm{Brown}, \binits{S.A.}},
+\bauthor{\bsnm{Buhmann}, \binits{J.M.}}:
+\batitle{{SPINDLE}: {End}-to-end learning from {EEG}/{EMG} to extrapolate animal sleep scoring across experimental settings, labs and species}.
+\bjtitle{PLoS Computational Biology}
+\bvolume{15}(\bissue{4}),
+\bfpage{1006968}
+(\byear{2019})
+\doiurl{10.1371/journal.pcbi.1006968} .
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 10
+\bibitem[\protect\citeauthoryear{Kramer and Kinter}{2003}]{kramer_evaluation_2003}
+\begin{barticle}
+\bauthor{\bsnm{Kramer}, \binits{K.}},
+\bauthor{\bsnm{Kinter}, \binits{L.B.}}:
+\batitle{Evaluation and applications of radiotelemetry in small laboratory animals}.
+\bjtitle{Physiological Genomics}
+\bvolume{13}(\bissue{3}),
+\bfpage{197}--\blpage{205}
+(\byear{2003})
+\doiurl{10.1152/physiolgenomics.00164.2002}
+\end{barticle}
+\endbibitem
+
+%%% 11
+\bibitem[\protect\citeauthoryear{Papazoglou et~al.}{2016}]{papazoglou_non-restraining_2016}
+\begin{botherref}
+\oauthor{\bsnm{Papazoglou}, \binits{A.}},
+\oauthor{\bsnm{Lundt}, \binits{A.}},
+\oauthor{\bsnm{Wormuth}, \binits{C.}},
+\oauthor{\bsnm{Ehninger}, \binits{D.}},
+\oauthor{\bsnm{Henseler}, \binits{C.}},
+\oauthor{\bsnm{Soós}, \binits{J.}},
+\oauthor{\bsnm{Broich}, \binits{K.}},
+\oauthor{\bsnm{Weiergräber}, \binits{M.}}:
+Non-restraining {EEG} {Radiotelemetry}: {Epidural} and {Deep} {Intracerebral} {Stereotaxic} {EEG} {Electrode} {Placement}.
+Journal of Visualized Experiments: JoVE
+(112),
+54216
+(2016)
+\doiurl{10.3791/54216}
+\end{botherref}
+\endbibitem
+
+%%% 12
+\bibitem[\protect\citeauthoryear{Rentschler et~al.}{2021}]{rentschler_prenatal_2021}
+\begin{barticle}
+\bauthor{\bsnm{Rentschler}, \binits{K.M.}},
+\bauthor{\bsnm{Baratta}, \binits{A.M.}},
+\bauthor{\bsnm{Ditty}, \binits{A.L.}},
+\bauthor{\bsnm{Wagner}, \binits{N.T.J.}},
+\bauthor{\bsnm{Wright}, \binits{C.J.}},
+\bauthor{\bsnm{Milosavljevic}, \binits{S.}},
+\bauthor{\bsnm{Mong}, \binits{J.A.}},
+\bauthor{\bsnm{Pocivavsek}, \binits{A.}}:
+\batitle{Prenatal {Kynurenine} {Elevation} {Elicits} {Sex}-{Dependent} {Changes} in {Sleep} and {Arousal} {During} {Adulthood}: {Implications} for {Psychotic} {Disorders}}.
+\bjtitle{Schizophrenia Bulletin}
+\bvolume{47}(\bissue{5}),
+\bfpage{1320}--\blpage{1330}
+(\byear{2021})
+\doiurl{10.1093/schbul/sbab029}
+\end{barticle}
+\endbibitem
+
+%%% 13
+\bibitem[\protect\citeauthoryear{Shannon}{1948}]{shannon_mathematical_1948}
+\begin{barticle}
+\bauthor{\bsnm{Shannon}, \binits{C.E.}}:
+\batitle{A mathematical theory of communication}.
+\bjtitle{The Bell System Technical Journal}
+\bvolume{27}(\bissue{3}),
+\bfpage{379}--\blpage{423}
+(\byear{1948})
+\doiurl{10.1002/j.1538-7305.1948.tb01338.x} .
+\bcomment{Conference Name: The Bell System Technical Journal}.
+Accessed 2024-08-20
+\end{barticle}
+\endbibitem
+
+%%% 14
+\bibitem[\protect\citeauthoryear{Jha et~al.}{2024}]{jha_slumbernet_2024}
+\begin{barticle}
+\bauthor{\bsnm{Jha}, \binits{P.K.}},
+\bauthor{\bsnm{Valekunja}, \binits{U.K.}},
+\bauthor{\bsnm{Reddy}, \binits{A.B.}}:
+\batitle{{SlumberNet}: deep learning classification of sleep stages using residual neural networks}.
+\bjtitle{Scientific Reports}
+\bvolume{14}(\bissue{1}),
+\bfpage{4797}
+(\byear{2024})
+\doiurl{10.1038/s41598-024-54727-0} .
+\bcomment{Publisher: Nature Publishing Group}.
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 15
+\bibitem[\protect\citeauthoryear{Vallat and Walker}{2021}]{vallat_open-source_2021}
+\begin{barticle}
+\bauthor{\bsnm{Vallat}, \binits{R.}},
+\bauthor{\bsnm{Walker}, \binits{M.P.}}:
+\batitle{An open-source, high-performance tool for automated sleep staging}.
+\bjtitle{eLife}
+\bvolume{10},
+\bfpage{70092}
+(\byear{2021})
+\doiurl{10.7554/eLife.70092}
+\end{barticle}
+\endbibitem
+
+%%% 16
+\bibitem[\protect\citeauthoryear{Smith et~al.}{2024}]{smith_toward_2024}
+\begin{barticle}
+\bauthor{\bsnm{Smith}, \binits{A.}},
+\bauthor{\bsnm{Azeem}, \binits{M.}},
+\bauthor{\bsnm{Odhiambo}, \binits{C.O.}},
+\bauthor{\bsnm{Wright}, \binits{P.J.}},
+\bauthor{\bsnm{Diktas}, \binits{H.E.}},
+\bauthor{\bsnm{Upton}, \binits{S.}},
+\bauthor{\bsnm{Martin}, \binits{C.K.}},
+\bauthor{\bsnm{Froeliger}, \binits{B.}},
+\bauthor{\bsnm{Corbett}, \binits{C.F.}},
+\bauthor{\bsnm{Valafar}, \binits{H.}}:
+\batitle{Toward {Concurrent} {Identification} of {Human} {Activities} with a {Single} {Unifying} {Neural} {Network} {Classification}: {First} {Step}}.
+\bjtitle{Sensors}
+\bvolume{24}(\bissue{14}),
+\bfpage{4542}
+(\byear{2024})
+\doiurl{10.3390/s24144542} .
+\bcomment{Number: 14 Publisher: Multidisciplinary Digital Publishing Institute}.
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 17
+\bibitem[\protect\citeauthoryear{Chien et~al.}{2022}]{chien_maeeg_2022}
+\begin{botherref}
+\oauthor{\bsnm{Chien}, \binits{H.-Y.S.}},
+\oauthor{\bsnm{Goh}, \binits{H.}},
+\oauthor{\bsnm{Sandino}, \binits{C.M.}},
+\oauthor{\bsnm{Cheng}, \binits{J.Y.}}:
+{MAEEG}: {Masked} {Auto}-encoder for {EEG} {Representation} {Learning}.
+arXiv.
+arXiv:2211.02625 [cs, eess]
+(2022).
+\doiurl{10.48550/arXiv.2211.02625} .
+\url{http://arxiv.org/abs/2211.02625}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 18
+\bibitem[\protect\citeauthoryear{Vaswani et~al.}{2023}]{vaswani_attention_2023}
+\begin{botherref}
+\oauthor{\bsnm{Vaswani}, \binits{A.}},
+\oauthor{\bsnm{Shazeer}, \binits{N.}},
+\oauthor{\bsnm{Parmar}, \binits{N.}},
+\oauthor{\bsnm{Uszkoreit}, \binits{J.}},
+\oauthor{\bsnm{Jones}, \binits{L.}},
+\oauthor{\bsnm{Gomez}, \binits{A.N.}},
+\oauthor{\bsnm{Kaiser}, \binits{L.}},
+\oauthor{\bsnm{Polosukhin}, \binits{I.}}:
+Attention {Is} {All} {You} {Need}.
+arXiv.
+arXiv:1706.03762 [cs]
+(2023).
+\doiurl{10.48550/arXiv.1706.03762} .
+\url{http://arxiv.org/abs/1706.03762}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 19
+\bibitem[\protect\citeauthoryear{He et~al.}{2015}]{he_deep_2015}
+\begin{botherref}
+\oauthor{\bsnm{He}, \binits{K.}},
+\oauthor{\bsnm{Zhang}, \binits{X.}},
+\oauthor{\bsnm{Ren}, \binits{S.}},
+\oauthor{\bsnm{Sun}, \binits{J.}}:
+Deep {Residual} {Learning} for {Image} {Recognition}.
+arXiv.
+arXiv:1512.03385 [cs]
+(2015).
+\doiurl{10.48550/arXiv.1512.03385} .
+\url{http://arxiv.org/abs/1512.03385}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 20
+\bibitem[\protect\citeauthoryear{Krizhevsky et~al.}{2012}]{krizhevsky_imagenet_2012}
+\begin{bchapter}
+\bauthor{\bsnm{Krizhevsky}, \binits{A.}},
+\bauthor{\bsnm{Sutskever}, \binits{I.}},
+\bauthor{\bsnm{Hinton}, \binits{G.E.}}:
+\bctitle{{ImageNet} {Classification} with {Deep} {Convolutional} {Neural} {Networks}}.
+In: \bbtitle{Advances in {Neural} {Information} {Processing} {Systems}},
+vol. \bseriesno{25}.
+\bpublisher{Curran Associates, Inc.}, \blocation{???}
+(\byear{2012})
+\end{bchapter}
+\endbibitem
+
+%%% 21
+\bibitem[\protect\citeauthoryear{Supratak et~al.}{2017}]{supratak_deepsleepnet_2017}
+\begin{barticle}
+\bauthor{\bsnm{Supratak}, \binits{A.}},
+\bauthor{\bsnm{Dong}, \binits{H.}},
+\bauthor{\bsnm{Wu}, \binits{C.}},
+\bauthor{\bsnm{Guo}, \binits{Y.}}:
+\batitle{{DeepSleepNet}: {A} {Model} for {Automatic} {Sleep} {Stage} {Scoring} {Based} on {Raw} {Single}-{Channel} {EEG}}.
+\bjtitle{IEEE transactions on neural systems and rehabilitation engineering: a publication of the IEEE Engineering in Medicine and Biology Society}
+\bvolume{25}(\bissue{11}),
+\bfpage{1998}--\blpage{2008}
+(\byear{2017})
+\doiurl{10.1109/TNSRE.2017.2721116}
+\end{barticle}
+\endbibitem
+
+%%% 22
+\bibitem[\protect\citeauthoryear{Perslev et~al.}{2019}]{perslev_u-time_2019}
+\begin{botherref}
+\oauthor{\bsnm{Perslev}, \binits{M.}},
+\oauthor{\bsnm{Jensen}, \binits{M.H.}},
+\oauthor{\bsnm{Darkner}, \binits{S.}},
+\oauthor{\bsnm{Jennum}, \binits{P.J.}},
+\oauthor{\bsnm{Igel}, \binits{C.}}:
+U-{Time}: {A} {Fully} {Convolutional} {Network} for {Time} {Series} {Segmentation} {Applied} to {Sleep} {Staging}.
+arXiv.
+arXiv:1910.11162 [cs, eess, stat]
+(2019).
+\doiurl{10.48550/arXiv.1910.11162} .
+\url{http://arxiv.org/abs/1910.11162}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 23
+\bibitem[\protect\citeauthoryear{Smith et~al.}{2022}]{Smith_Anand_Milosavljevic_Rentschler_Pocivavsek_Valafar_2022}
+\begin{botherref}
+\oauthor{\bsnm{Smith}, \binits{A.}},
+\oauthor{\bsnm{Anand}, \binits{H.}},
+\oauthor{\bsnm{Milosavljevic}, \binits{S.}},
+\oauthor{\bsnm{Rentschler}, \binits{K.M.}},
+\oauthor{\bsnm{Pocivavsek}, \binits{A.}},
+\oauthor{\bsnm{Valafar}, \binits{H.}}:
+Application of machine learning to sleep stage classification
+(arXiv:2111.03085)
+(2022)
+\doiurl{10.48550/arXiv.2111.03085} .
+arXiv:2111.03085 [cs]
+\end{botherref}
+\endbibitem
+
+%%% 24
+\bibitem[\protect\citeauthoryear{Gao et~al.}{2016}]{gao_multiple_2016}
+\begin{barticle}
+\bauthor{\bsnm{Gao}, \binits{V.}},
+\bauthor{\bsnm{Turek}, \binits{F.}},
+\bauthor{\bsnm{Vitaterna}, \binits{M.}}:
+\batitle{Multiple classifier systems for automatic sleep scoring in mice}.
+\bjtitle{Journal of Neuroscience Methods}
+\bvolume{264},
+\bfpage{33}--\blpage{39}
+(\byear{2016})
+\doiurl{10.1016/j.jneumeth.2016.02.016} .
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 25
+\bibitem[\protect\citeauthoryear{Gross et~al.}{2009}]{gross_open-source_2009}
+\begin{barticle}
+\bauthor{\bsnm{Gross}, \binits{B.A.}},
+\bauthor{\bsnm{Walsh}, \binits{C.M.}},
+\bauthor{\bsnm{Turakhia}, \binits{A.A.}},
+\bauthor{\bsnm{Booth}, \binits{V.}},
+\bauthor{\bsnm{Mashour}, \binits{G.A.}},
+\bauthor{\bsnm{Poe}, \binits{G.R.}}:
+\batitle{Open-source logic-based automated sleep scoring software using electrophysiological recordings in rats}.
+\bjtitle{Journal of Neuroscience Methods}
+\bvolume{184}(\bissue{1}),
+\bfpage{10}--\blpage{18}
+(\byear{2009})
+\doiurl{10.1016/j.jneumeth.2009.07.009}
+\end{barticle}
+\endbibitem
+
+%%% 26
+\bibitem[\protect\citeauthoryear{Stephenson et~al.}{2009}]{stephenson_automated_2009}
+\begin{barticle}
+\bauthor{\bsnm{Stephenson}, \binits{R.}},
+\bauthor{\bsnm{Caron}, \binits{A.M.}},
+\bauthor{\bsnm{Cassel}, \binits{D.B.}},
+\bauthor{\bsnm{Kostela}, \binits{J.C.}}:
+\batitle{Automated analysis of sleep-wake state in rats}.
+\bjtitle{Journal of Neuroscience Methods}
+\bvolume{184}(\bissue{2}),
+\bfpage{263}--\blpage{274}
+(\byear{2009})
+\doiurl{10.1016/j.jneumeth.2009.08.014}
+\end{barticle}
+\endbibitem
+
+%%% 27
+\bibitem[\protect\citeauthoryear{Louis et~al.}{2004}]{louis_design_2004}
+\begin{barticle}
+\bauthor{\bsnm{Louis}, \binits{R.P.}},
+\bauthor{\bsnm{Lee}, \binits{J.}},
+\bauthor{\bsnm{Stephenson}, \binits{R.}}:
+\batitle{Design and validation of a computer-based sleep-scoring algorithm}.
+\bjtitle{Journal of Neuroscience Methods}
+\bvolume{133}(\bissue{1-2}),
+\bfpage{71}--\blpage{80}
+(\byear{2004})
+\doiurl{10.1016/j.jneumeth.2003.09.025}
+\end{barticle}
+\endbibitem
+
+%%% 28
+\bibitem[\protect\citeauthoryear{Ellen and Dash}{2021}]{ellen_artificial_2021}
+\begin{barticle}
+\bauthor{\bsnm{Ellen}, \binits{J.G.}},
+\bauthor{\bsnm{Dash}, \binits{M.B.}}:
+\batitle{An artificial neural network for automated behavioral state classification in rats}.
+\bjtitle{PeerJ}
+\bvolume{9},
+\bfpage{12127}
+(\byear{2021})
+\doiurl{10.7717/peerj.12127} .
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 29
+\bibitem[\protect\citeauthoryear{Tezuka et~al.}{2021}]{tezuka_real-time_2021}
+\begin{barticle}
+\bauthor{\bsnm{Tezuka}, \binits{T.}},
+\bauthor{\bsnm{Kumar}, \binits{D.}},
+\bauthor{\bsnm{Singh}, \binits{S.}},
+\bauthor{\bsnm{Koyanagi}, \binits{I.}},
+\bauthor{\bsnm{Naoi}, \binits{T.}},
+\bauthor{\bsnm{Sakaguchi}, \binits{M.}}:
+\batitle{Real-time, automatic, open-source sleep stage classification system using single {EEG} for mice}.
+\bjtitle{Scientific Reports}
+\bvolume{11},
+\bfpage{11151}
+(\byear{2021})
+\doiurl{10.1038/s41598-021-90332-1} .
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 30
+\bibitem[\protect\citeauthoryear{Liu et~al.}{2022}]{liu_attention-based_2022}
+\begin{botherref}
+\oauthor{\bsnm{Liu}, \binits{Y.}},
+\oauthor{\bsnm{Yang}, \binits{Z.}},
+\oauthor{\bsnm{You}, \binits{Y.}},
+\oauthor{\bsnm{Shan}, \binits{W.}},
+\oauthor{\bsnm{Ban}, \binits{W.}}:
+An attention-based temporal convolutional network for rodent sleep stage classification across species, mutants and experimental environments with single-channel electroencephalogram.
+Physiological Measurement
+\textbf{43}(8)
+(2022)
+\doiurl{10.1088/1361-6579/ac7b67}
+\end{botherref}
+\endbibitem
+
+%%% 31
+\bibitem[\protect\citeauthoryear{Milosavljevic et~al.}{2023}]{milosavljevic_kynurenine_2023}
+\begin{barticle}
+\bauthor{\bsnm{Milosavljevic}, \binits{S.}},
+\bauthor{\bsnm{Smith}, \binits{A.K.}},
+\bauthor{\bsnm{Wright}, \binits{C.J.}},
+\bauthor{\bsnm{Valafar}, \binits{H.}},
+\bauthor{\bsnm{Pocivavsek}, \binits{A.}}:
+\batitle{Kynurenine aminotransferase {II} inhibition promotes sleep and rescues impairments induced by neurodevelopmental insult}.
+\bjtitle{Translational Psychiatry}
+\bvolume{13}(\bissue{1}),
+\bfpage{1}--\blpage{12}
+(\byear{2023})
+\doiurl{10.1038/s41398-023-02399-1} .
+\bcomment{Publisher: Nature Publishing Group}.
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 32
+\bibitem[\protect\citeauthoryear{Goodfellow et~al.}{2016}]{Goodfellow-et-al-2016}
+\begin{bbook}
+\bauthor{\bsnm{Goodfellow}, \binits{I.}},
+\bauthor{\bsnm{Bengio}, \binits{Y.}},
+\bauthor{\bsnm{Courville}, \binits{A.}}:
+\bbtitle{Deep Learning}.
+\bpublisher{MIT Press}, \blocation{???}
+(\byear{2016}).
+\bcomment{\url{http://www.deeplearningbook.org}}
+\end{bbook}
+\endbibitem
+
+%%% 33
+\bibitem[\protect\citeauthoryear{Hastie et~al.}{2009}]{Hastie_Tibshirani_Friedman_2009}
+\begin{bbook}
+\bauthor{\bsnm{Hastie}, \binits{T.}},
+\bauthor{\bsnm{Tibshirani}, \binits{R.}},
+\bauthor{\bsnm{Friedman}, \binits{J.}}:
+\bbtitle{The Elements of Statistical Learning}.
+\bsertitle{Springer Series in Statistics}.
+\bpublisher{Springer},
+\blocation{New York, NY}
+(\byear{2009}).
+\doiurl{10.1007/978-0-387-84858-7} .
+\burl{http://link.springer.com/10.1007/978-0-387-84858-7}
+\end{bbook}
+\endbibitem
+
+%%% 34
+\bibitem[\protect\citeauthoryear{Hochreiter and Schmidhuber}{1997}]{hochreiter_long_1997}
+\begin{barticle}
+\bauthor{\bsnm{Hochreiter}, \binits{S.}},
+\bauthor{\bsnm{Schmidhuber}, \binits{J.}}:
+\batitle{Long short-term memory}.
+\bjtitle{Neural computation}
+\bvolume{9}(\bissue{8}),
+\bfpage{1735}--\blpage{1780}
+(\byear{1997})
+\doiurl{10.1162/neco.1997.9.8.1735} .
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 35
+\bibitem[\protect\citeauthoryear{Radosavovic et~al.}{2020}]{radosavovic_designing_2020}
+\begin{botherref}
+\oauthor{\bsnm{Radosavovic}, \binits{I.}},
+\oauthor{\bsnm{Kosaraju}, \binits{R.P.}},
+\oauthor{\bsnm{Girshick}, \binits{R.}},
+\oauthor{\bsnm{He}, \binits{K.}},
+\oauthor{\bsnm{Dollár}, \binits{P.}}:
+Designing {Network} {Design} {Spaces}.
+arXiv.
+arXiv:2003.13678 [cs]
+(2020).
+\doiurl{10.48550/arXiv.2003.13678} .
+\url{http://arxiv.org/abs/2003.13678}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 36
+\bibitem[\protect\citeauthoryear{Lin et~al.}{2014}]{lin_network_2014}
+\begin{botherref}
+\oauthor{\bsnm{Lin}, \binits{M.}},
+\oauthor{\bsnm{Chen}, \binits{Q.}},
+\oauthor{\bsnm{Yan}, \binits{S.}}:
+Network {In} {Network}.
+arXiv.
+arXiv:1312.4400 [cs]
+(2014).
+\doiurl{10.48550/arXiv.1312.4400} .
+\url{http://arxiv.org/abs/1312.4400}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 37
+\bibitem[\protect\citeauthoryear{Ba et~al.}{2016}]{ba_layer_2016}
+\begin{botherref}
+\oauthor{\bsnm{Ba}, \binits{J.L.}},
+\oauthor{\bsnm{Kiros}, \binits{J.R.}},
+\oauthor{\bsnm{Hinton}, \binits{G.E.}}:
+Layer {Normalization}.
+arXiv.
+arXiv:1607.06450 [cs, stat]
+(2016).
+\doiurl{10.48550/arXiv.1607.06450} .
+\url{http://arxiv.org/abs/1607.06450}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 38
+\bibitem[\protect\citeauthoryear{Fukushima}{1969}]{fukushima_visual_1969}
+\begin{barticle}
+\bauthor{\bsnm{Fukushima}, \binits{K.}}:
+\batitle{Visual {Feature} {Extraction} by a {Multilayered} {Network} of {Analog} {Threshold} {Elements}}.
+\bjtitle{IEEE Transactions on Systems Science and Cybernetics}
+\bvolume{5}(\bissue{4}),
+\bfpage{322}--\blpage{333}
+(\byear{1969})
+\doiurl{10.1109/TSSC.1969.300225} .
+\bcomment{Conference Name: IEEE Transactions on Systems Science and Cybernetics}.
+Accessed 2024-08-27
+\end{barticle}
+\endbibitem
+
+%%% 39
+\bibitem[\protect\citeauthoryear{Kullback and Leibler}{1951}]{kullback_information_1951}
+\begin{barticle}
+\bauthor{\bsnm{Kullback}, \binits{S.}},
+\bauthor{\bsnm{Leibler}, \binits{R.A.}}:
+\batitle{On {Information} and {Sufficiency}}.
+\bjtitle{The Annals of Mathematical Statistics}
+\bvolume{22}(\bissue{1}),
+\bfpage{79}--\blpage{86}
+(\byear{1951})
+\doiurl{10.1214/aoms/1177729694} .
+\bcomment{Publisher: Institute of Mathematical Statistics}.
+Accessed 2024-08-22
+\end{barticle}
+\endbibitem
+
+%%% 40
+\bibitem[\protect\citeauthoryear{Kingma and Ba}{2017}]{kingma_adam_2017}
+\begin{botherref}
+\oauthor{\bsnm{Kingma}, \binits{D.P.}},
+\oauthor{\bsnm{Ba}, \binits{J.}}:
+Adam: {A} {Method} for {Stochastic} {Optimization}.
+arXiv.
+arXiv:1412.6980 [cs]
+(2017).
+\doiurl{10.48550/arXiv.1412.6980} .
+\url{http://arxiv.org/abs/1412.6980}
+Accessed 2024-08-27
+\end{botherref}
+\endbibitem
+
+%%% 41
+\bibitem[\protect\citeauthoryear{Maaten and Hinton}{2008}]{maaten_visualizing_2008}
+\begin{barticle}
+\bauthor{\bsnm{Maaten}, \binits{L.v.d.}},
+\bauthor{\bsnm{Hinton}, \binits{G.}}:
+\batitle{Visualizing {Data} using t-{SNE}}.
+\bjtitle{Journal of Machine Learning Research}
+\bvolume{9}(\bissue{86}),
+\bfpage{2579}--\blpage{2605}
+(\byear{2008}).
+Accessed 2024-08-22
+\end{barticle}
+\endbibitem
+
+\end{thebibliography}

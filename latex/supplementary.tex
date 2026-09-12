@@ -1,0 +1,295 @@
+%Version 3 December 2023
+% See section 11 of the User Manual for version history
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%                                                                 %%
+%% Please do not use \input{...} to include other tex files.       %%
+%% Submit your LaTeX manuscript as one .tex document.              %%
+%%                                                                 %%
+%% All additional figures and files should be attached             %%
+%% separately and not embedded in the \TeX\ document itself.       %%
+%%                                                                 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%\documentclass[referee,sn-basic]{sn-jnl}% referee option is meant for double line spacing
+
+%%=======================================================%%
+%% to print line numbers in the margin use lineno option %%
+%%=======================================================%%
+
+%%\documentclass[lineno,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+%%======================================================%%
+%% to compile with pdflatex/xelatex use pdflatex option %%
+%%======================================================%%
+
+%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+
+
+%%Note: the following reference styles support Namedate and Numbered referencing. By default the style follows the most common style. To switch between the options you can add or remove Numbered in the optional parenthesis. 
+%%The option is available for: sn-basic.bst, sn-vancouver.bst, sn-chicago.bst%  
+ 
+%%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
+%%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style 
+%%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
+%%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
+%%\documentclass[pdflatex,sn-vancouver,Numbered]{sn-jnl}% Vancouver Reference Style
+%%\documentclass[pdflatex,sn-apa]{sn-jnl}% APA Reference Style 
+%%\documentclass[pdflatex,sn-chicago]{sn-jnl}% Chicago-based Humanities Reference Style
+
+%%%% Standard Packages
+%%<additional latex packages if required can be included here>
+
+\usepackage{graphicx}%
+\usepackage{multirow}%
+\usepackage{amsmath,amssymb,amsfonts}%
+\usepackage{amsthm}%
+\usepackage{mathrsfs}%
+\usepackage[title]{appendix}%
+\usepackage{xcolor}%
+\usepackage{textcomp}%
+\usepackage{manyfoot}%
+\usepackage{booktabs}%
+\usepackage{algorithm}%
+\usepackage{algorithmicx}%
+\usepackage{algpseudocode}%
+\usepackage{listings}%
+\usepackage{hyperref}%
+%%%%
+
+%%%%%=============================================================================%%%%
+%%%%  Remarks: This template is provided to aid authors with the preparation
+%%%%  of original research articles intended for submission to journals published 
+%%%%  by Springer Nature. The guidance has been prepared in partnership with 
+%%%%  production teams to conform to Springer Nature technical requirements. 
+%%%%  Editorial and presentation requirements differ among journal portfolios and 
+%%%%  research disciplines. You may find sections in this template are irrelevant 
+%%%%  to your work and are empowered to omit any such section if allowed by the 
+%%%%  journal you intend to submit to. The submission guidelines and policies 
+%%%%  of the journal take precedence. A detailed User Manual is available in the 
+%%%%  template package for technical guidance.
+%%%%%=============================================================================%%%%
+
+%% as per the requirement new theorem styles can be included as shown below
+\theoremstyle{thmstyleone}%
+\newtheorem{theorem}{Theorem}%  meant for continuous numbers
+%%\newtheorem{theorem}{Theorem}[section]% meant for sectionwise numbers
+%% optional argument [theorem] produces theorem numbering sequence instead of independent numbers for Proposition
+\newtheorem{proposition}[theorem]{Proposition}% 
+%%\newtheorem{proposition}{Proposition}% to get separate numbers for theorem and proposition etc.
+
+\theoremstyle{thmstyletwo}%
+\newtheorem{example}{Example}%
+\newtheorem{remark}{Remark}%
+
+\theoremstyle{thmstylethree}%
+\newtheorem{definition}{Definition}%
+
+\raggedbottom
+%%\unnumbered% uncomment this for unnumbered level heads
+\newcommand{\ekynprecision}{88.1}
+\newcommand{\ekynrecall}{88.5}
+\newcommand{\ekynfscore}{87.6}
+\newcommand{\ekynfscorep}{78.2}
+\newcommand{\ekynfscores}{92.3}
+\newcommand{\ekynfscorew}{92.2}
+\newcommand{\ekynprecisionp}{78.5}
+\newcommand{\ekynprecisions}{94.1}
+\newcommand{\ekynprecisionw}{91.8}
+\newcommand{\ekynrecallp}{81.1}
+\newcommand{\ekynrecalls}{91.2}
+\newcommand{\ekynrecallw}{93.1}
+\newcommand{\ekynprecisionstd}{4.3}
+\newcommand{\ekynrecallstd}{6.4}
+\newcommand{\ekynfscorestd}{5.6}
+\newcommand{\ekynfscorepstd}{14.0}
+\newcommand{\ekynfscoresstd}{5.0}
+\newcommand{\ekynfscorewstd}{2.9}
+\newcommand{\ekynprecisionpstd}{12.5}
+\newcommand{\ekynprecisionsstd}{3.8}
+\newcommand{\ekynprecisionwstd}{6.4}
+\newcommand{\ekynrecallpstd}{16.6}
+\newcommand{\ekynrecallsstd}{9.4}
+\newcommand{\ekynrecallwstd}{3.8}
+
+\newcommand{\liuprecision}{87.1}
+\newcommand{\liurecall}{89.2}
+\newcommand{\liuf}{88.1}
+\newcommand{\liufp}{79.4}
+\newcommand{\liufs}{92.5}
+\newcommand{\liufw}{92.4}
+
+\newcommand{\spindleprecision}{89.4}
+\newcommand{\spindlerecall}{90.2}
+\newcommand{\spindlefscore}{89.6}
+\newcommand{\spindlefscorep}{83.6}
+\newcommand{\spindlefscores}{92.1}
+\newcommand{\spindlefscorew}{93.0}
+\newcommand{\spindleprecisionp}{82.8}
+\newcommand{\spindleprecisions}{89.9}
+\newcommand{\spindleprecisionw}{95.5}
+\newcommand{\spindlerecallp}{85.3}
+\newcommand{\spindlerecalls}{94.5}
+\newcommand{\spindlerecallw}{90.8}
+\newcommand{\spindleprecisionstd}{2.6}
+\newcommand{\spindlerecallstd}{3.9}
+\newcommand{\spindlefscorestd}{2.9}
+\newcommand{\spindlefscorepstd}{6.0}
+\newcommand{\spindlefscoresstd}{2.8}
+\newcommand{\spindlefscorewstd}{2.9}
+\newcommand{\spindleprecisionpstd}{6.6}
+\newcommand{\spindleprecisionsstd}{3.8}
+\newcommand{\spindleprecisionwstd}{2.6}
+\newcommand{\spindlerecallpstd}{9.6}
+\newcommand{\spindlerecallsstd}{3.0}
+\newcommand{\spindlerecallwstd}{4.3}
+
+\renewcommand{\thefigure}{S\arabic{figure}} % Figures will be numbered as S1, S2, etc.
+\renewcommand{\thetable}{S\arabic{table}}   % Tables will be numbered as S1, S2, etc.
+
+\begin{document}
+
+\title[Article Title]{A deep learning software tool for automated sleep staging in rats via single channel EEG}
+
+%%=============================================================%%
+%% GivenName	-> \fnm{Joergen W.}
+%% Particle	-> \spfx{van der} -> surname prefix
+%% FamilyName	-> \sur{Ploeg}
+%% Suffix	-> \sfx{IV}
+%% \author*[1,2]{\fnm{Joergen W.} \spfx{van der} \sur{Ploeg} 
+%%  \sfx{IV}}\email{iauthor@gmail.com}
+%%=============================================================%%
+
+
+\author[1]{\fnm{Andrew} \sur{Smith}}\email{andrewsmith@sc.edu}
+
+\author[2]{\fnm{Snezana} \sur{Milosavljevic}}\email{snezana.milosavljevic@uscmed.sc.edu}
+
+\author[2]{\fnm{Courtney} \sur{Wright}}\email{courtney.wright@uscmed.sc.edu}
+
+\author[2]{\fnm{Charlie} \sur{Grant}}\email{charlie.grant@uscmed.sc.edu}
+
+\author[2]{\fnm{Ana} \sur{Pocivavsek}}\email{ana.pocivavsek@uscmed.sc.edu}
+
+\author*[1]{\fnm{Homayoun} \sur{Valafar}}\email{homayoun@cse.sc.edu}
+
+\affil*[1]{\orgdiv{Computer Science and Engineering}, \orgname{University of South Carolina}, \orgaddress{\city{Columbia}, \postcode{29208}, \state{SC}, \country{USA}}}
+
+\affil[2]{\orgdiv{Department of Pharmacology, Physiology, and Neuroscience}, \orgname{University of South Carolina School of Medicine}, \orgaddress{\city{Columbia}, \postcode{29208}, \state{SC}, \country{USA}}}
+
+\abstract{Poor quality and poor duration of sleep have been associated with cognitive decline, diseases, and disorders. Therefore, sleep studies are imperative to recapitulate phenotypes associated with poor sleep quality and uncover mechanisms contributing to psychopathology. The composition of sleep in terms of sleep stages serves as a proxy for determining sleep quality. Currently, the gold standard for sleep staging is human inspection of polysomnography (PSG), which is time-consuming. To accelerate the analysis, we have developed a deep-learning-based software tool for automated sleep stage classification in rats. This study aimed to develop an automated method for classifying three sleep stages in rats (paradoxical sleep, slow-wave sleep, and wakefulness) using a deep learning approach based on single-channel EEG data. Single-channel EEG data were acquired from 16 rats, each undergoing two 24-hour recording sessions. The data were labeled by human experts in 10-second epochs corresponding to three stages: paradoxical sleep, slow-wave sleep, and wakefulness. A deep neural network (DNN) model was designed and trained to classify these stages using the raw temporal data from the EEG. The DNN achieved strong performance in predicting the three sleep stages, with an average F1 score of \ekynfscore\% over a cross-validated test set. The algorithm was able to predict key parameters of sleep architecture, including total bout duration, average bout duration, and number of bouts, with significant accuracy. Our deep learning model effectively automates the classification of sleep stages using single-channel EEG data in rats, reducing the need for labor-intensive manual annotation. This tool enables high-throughput sleep studies and may accelerate research into sleep-related pathologies. Furthermore, we provide over 700 hours of expert-scored sleep data, available for public use in future research studies.}
+
+\keywords{sleep staging, deep learning, EEG, rats, sleep architecture, automated classification}
+
+%%\pacs[JEL Classification]{D8, H51}
+
+%%\pacs[MSC Classification]{35A01, 65L10, 65L12, 65L20, 65L70}
+
+\section*{Supplementary Material}
+% Fig S1
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS1.pdf}
+    \caption{
+        \textbf{Diagram of dataset creation.} PSG data acquired for 24 hours for each of 16 rats producing 16 discrete 24-hour PSG recordings. The same 16 rats underwent PSG data acquisition for another 24 hours producing another set of 16 discrete 24-hour PSG recordings. Rat identity was maintained across these two recording sessions. We grouped both sets of PSG recordings across the rats for proper algorithm training. The grouped set of PSG recordings is shown on the right with 16 vertical rectangles each representing 48 hours of PSG data. We refer to the dataset as 16 48-hour PSG recordings for simplicity.
+    }\label{dataset}
+\end{figure}
+
+% Fig S2
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS2.pdf}
+    \caption{
+        \textbf{Diagram of fundamental components of our algorithm.}\quad (A) The 10-second epoch encoder, and (B) The residual block. The 10-second epoch encoder consists of a sequence of residual blocks and then global average pooling. Each residual block has a number that denotes the number of latent feature maps to use in that block. The residual block consists of a sequence of convolutions, normalization, and nonlinearities. There is a residual summation before the final nonlinearity. Conv1d layers have a number that denotes the kernel size of convolution.
+    }\label{model_components}
+\end{figure}
+
+% Fig S3
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS3.pdf}
+    \caption{
+        \textbf{Comparison between sleep stages in our prediction signal and the SPINDLE reference signal.}\quad Our network predicts sleep stages in 10-second epochs, but the SPINDLE dataset provides a reference in 4-second epochs. Therefore, we devised a reasonable method of comparison shown here. Without loss of generality, we represent two different sleep stages (they may be any two) by vertical lines and horizontal lines, respectively. For each reference 4-second epoch, the epoch is either contained within our prediction 10-second epoch or evenly spans two of our prediction 10-second epochs. For each reference 4-second epoch entirely contained within a prediction 10-second epoch, we compare these sleep stages directly. For the reference 4-second epoch that evenly spans two of our prediction 10-second epochs, we evaluate average correctness over the two prediction 10-second epochs. (A) If an S reference 4-second epoch spans an S-P pair of prediction 10-second epochs, we assign an accuracy of 0.5. (B) If a P reference 4-seconds epoch spans a P-P pair of prediction 10-second epochs, we assign an accuracy of 1. (C) If the prediction 10-second epochs are both incorrect, we assign an accuracy of 0. S - slow-wave sleep, P - paradoxical sleep.
+    }\label{spindle}
+\end{figure}
+
+% Fig S4
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS4.pdf}
+    \caption{
+        \textbf{Performance of our algorithm on parameters of the testing set.}\quad Performance of our algorithm on parameters of the testing set. Panels (A-C) show the total bout duration for Paradoxical, Slow Wave, and Wakefulness stages, respectively, against predicted values. Panels (D-F) display the average bout duration for the same stages, with (D) for Paradoxical, (E) for Slow Wave, and (F) for Wakefulness. Panels (G-I) present the total number of bouts for Paradoxical (G), Slow Wave (H), and Wakefulness (I) stages. Linear regression was applied for all combinations of sleep stages and parameters. The shading represents the 95\% confidence interval, and the x-axis shows the predicted values while the y-axis shows the measured (or reference) values. The analysis demonstrates the model's ability to predict bout parameters with reasonable confidence, with tighter fits in some stages and parameters compared to others.
+    }\label{proxy_grid}
+\end{figure}
+
+% Fig S5
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS5.pdf}
+    \caption{
+        \textbf{Performance of the algorithm on the SPINDLE dataset over 22 folds of cross-validation.}\quad (A) Precision, recall, and f1-score over 22 folds of cross-validation are shown by a boxplot. (B) Correlation between macro f1-score and average confidence levels of the algorithm. Overall confidence was calculated for each EEG recording by averaging the confidence levels across all 10-second epochs. (C) Confusion matrix. The diagonal elements represent the percentage of 10-second epochs that were correctly classified by the algorithm (recall), whereas the off-diagonal elements show the percentage of 10-second epochs mislabeled by the algorithm. (D) Duration of each sleep stage for predicted signal and reference signal over 16 folds of cross-validation expressed as a proportion of the total duration of the given EEG recording. Pairs of boxplots are shown for each stage where the left box depicts the predicted distribution, and the right box depicts the reference distribution. P - paradoxical sleep, S - slow-wave sleep, W - wakefulness.
+    }\label{spindle_grid}
+\end{figure}
+
+% Fig S6
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figS6.pdf}
+    \caption{
+        \textbf{Stacked representation of algorithm predictions, raw data, and algorithm confidence for one fold. }\quad (A) The reference hypnogram as annotated by a human expert. (B) The predicted hypnogram as predicted by the algorithm. (C) The raw EEG signal that is used as the sole network input. (D) The probability distribution over sleep stages produced by the network. Additionally, the confidence level of the network is denoted by black line. P - paradoxical sleep, S - slow-wave sleep, W - wakefulness.
+    }\label{hypnogram}
+\end{figure}
+
+% Table S1
+\begin{table}[ht]
+    \caption{\textbf{Performance of our model and Liu et. al \cite{liu_attention-based_2022} model on SPINDLE dataset.}\quad Metrics are the mean of 22 folds of cross-validation. Data are reported as mean $\pm$ standard deviation where applicable, otherwise, just the mean value is reported.}
+    \label{metrics_spindle}
+    \vskip 0.15in
+    \begin{centering}
+    \begin{small}
+    \begin{sc}
+    \begin{tabular}{lcccr}
+    \toprule
+    Metric & Ours (4s) & Liu et. al, 2021 (4s) \cite{liu_attention-based_2022}\\
+    \midrule
+    Precision & \textbf{\spindleprecision} $\pm$ \spindleprecisionstd &\liuprecision\\
+    Recall    & \textbf{\spindlerecall} $\pm$ \spindlerecallstd &\liurecall\\
+    F1        & \textbf{\spindlefscore} $\pm$ \spindlefscorestd &\liuf\\
+    F1 P      & \textbf{\spindlefscorep}           &\liufp\\
+    F1 S      & \spindlefscores                    &\textbf{\liufs}\\
+    F1 W      & \textbf{\spindlefscorew}           &\liufw\\
+    \bottomrule
+    \end{tabular}
+    \end{sc}
+    \end{small}
+    \end{centering}
+    \vskip -0.1in
+\end{table}
+\section*{Figure Labels}
+\noindent
+\textbf{Figure S1. Diagram of dataset creation.}\quad PSG data acquired for 24 hours for each of 16 rats producing 16 discrete 24-hour PSG recordings. The same 16 rats underwent PSG data acquisition for another 24 hours producing another set of 16 discrete 24-hour PSG recordings. Rat identity was maintained across these two recording sessions. We grouped both sets of PSG recordings across the rats for proper algorithm training. The grouped set of PSG recordings is shown on the right with 16 vertical rectangles each representing 48 hours of PSG data. We refer to the dataset as 16 48-hour PSG recordings for simplicity.
+
+\vspace{12pt} % Adds space between legends
+
+\noindent
+\textbf{Figure S2. Diagram of fundamental components of our algorithm.}\quad (A) The 10-second epoch encoder, and (B) The residual block. The 10-second epoch encoder consists of a sequence of residual blocks and then global average pooling. Each residual block has a number that denotes the number of latent feature maps to use in that block. The residual block consists of a sequence of convolutions, normalization, and nonlinearities. There is a residual summation before the final nonlinearity. Conv1d layers have a number that denotes the kernel size of convolution.
+\vspace{12pt} % Adds space between legends
+
+\noindent
+\textbf{Figure S3. Comparison between sleep stages in our prediction signal and the SPINDLE reference signal.}\quad Our network predicts sleep stages in 10-second epochs, but the SPINDLE dataset provides a reference in 4-second epochs. Therefore, we devised a reasonable method of comparison shown here. Without loss of generality, we represent two different sleep stages (they may be any two) by vertical lines and horizontal lines, respectively. For each reference 4-second epoch, the epoch is either contained within our prediction 10-second epoch or evenly spans two of our prediction 10-second epochs. For each reference 4-second epoch entirely contained within a prediction 10-second epoch, we compare these sleep stages directly. For the reference 4-second epoch that evenly spans two of our prediction 10-second epochs, we evaluate average correctness over the two prediction 10-second epochs. (A) If an S reference 4-second epoch spans an S-P pair of prediction 10-second epochs, we assign an accuracy of 0.5. (B) If a P reference 4-seconds epoch spans a P-P pair of prediction 10-second epochs, we assign an accuracy of 1. (C) If the prediction 10-second epochs are both incorrect, we assign an accuracy of 0. S - slow-wave sleep, P - paradoxical sleep.
+\vspace{12pt} % Adds space between legends
+
+\noindent
+\textbf{Figure S4. Performance of our algorithm on parameters of the testing set.}\quad Performance of our algorithm on parameters of the testing set. Panels (A-C) show the total bout duration for Paradoxical, Slow Wave, and Wakefulness stages, respectively, against predicted values. Panels (D-F) display the average bout duration for the same stages, with (D) for Paradoxical, (E) for Slow Wave, and (F) for Wakefulness. Panels (G-I) present the total number of bouts for Paradoxical (G), Slow Wave (H), and Wakefulness (I) stages. Linear regression was applied for all combinations of sleep stages and parameters. The shading represents the 95\% confidence interval, and the x-axis shows the predicted values while the y-axis shows the measured (or reference) values. The analysis demonstrates the model's ability to predict bout parameters with reasonable confidence, with tighter fits in some stages and parameters compared to others.
+\vspace{12pt} % Adds space between legends
+
+\noindent
+\textbf{Figure S5. Performance of the algorithm on the SPINDLE dataset over 22 folds of cross-validation.}\quad (A) Precision, recall, and f1-score over 22 folds of cross-validation are shown by a boxplot. (B) Correlation between macro f1-score and average confidence levels of the algorithm. Overall confidence was calculated for each EEG recording by averaging the confidence levels across all 10-second epochs. (C) Confusion matrix. The diagonal elements represent the percentage of 10-second epochs that were correctly classified by the algorithm (recall), whereas the off-diagonal elements show the percentage of 10-second epochs mislabeled by the algorithm. (D) Duration of each sleep stage for predicted signal and reference signal over 16 folds of cross-validation expressed as a proportion of the total duration of the given EEG recording. Pairs of boxplots are shown for each stage where the left box depicts the predicted distribution, and the right box depicts the reference distribution. P - paradoxical sleep, S - slow-wave sleep, W - wakefulness.
+\vspace{12pt} % Adds space between legends
+
+\noindent
+\textbf{Figure S6. Stacked representation of algorithm predictions, raw data, and algorithm confidence for one fold.}\quad (A) The reference hypnogram as annotated by a human expert. (B) The predicted hypnogram as predicted by the algorithm. (C) The raw EEG signal that is used as the sole network input. (D) The probability distribution over sleep stages produced by the network. Additionally, the confidence level of the network is denoted by black line. P - paradoxical sleep, S - slow-wave sleep, W - wakefulness.
+\vspace{12pt} % Adds space between legends
+\bibliography{sn-bibliography}
+\end{document}

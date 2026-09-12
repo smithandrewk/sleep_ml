@@ -1,0 +1,111 @@
+\relax 
+\bibstyle{sn-mathphys-num}
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\Newlabel{1}{1}
+\Newlabel{2}{2}
+\citation{cirelli_is_2008}
+\citation{jahrami_sleep_2021}
+\citation{graves_sleep_2003,rentschler_reducing_2024,siegel_sleep_2022,wright_stress_2023}
+\citation{rayan_sleep_2024}
+\citation{rattenborg_evolution_2023}
+\citation{miladinovic_spindle_2019}
+\citation{kramer_evaluation_2003,papazoglou_non-restraining_2016,rentschler_prenatal_2021}
+\citation{shannon_mathematical_1948}
+\citation{jha_slumbernet_2024,vallat_open-source_2021}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
+\newlabel{introduction}{{1}{2}{Introduction}{section.1}{}}
+\citation{smith_toward_2024,chien_maeeg_2022,vaswani_attention_2023,he_deep_2015,krizhevsky_imagenet_2012}
+\citation{supratak_deepsleepnet_2017,vallat_open-source_2021,perslev_u-time_2019,Smith_Anand_Milosavljevic_Rentschler_Pocivavsek_Valafar_2022}
+\citation{rayan_sleep_2024}
+\citation{miladinovic_spindle_2019,gao_multiple_2016,gross_open-source_2009,stephenson_automated_2009,louis_design_2004,ellen_artificial_2021}
+\citation{tezuka_real-time_2021,liu_attention-based_2022}
+\citation{tezuka_real-time_2021}
+\citation{shannon_mathematical_1948}
+\citation{liu_attention-based_2022}
+\citation{miladinovic_spindle_2019}
+\citation{liu_attention-based_2022}
+\citation{milosavljevic_kynurenine_2023}
+\citation{Goodfellow-et-al-2016}
+\citation{Hastie_Tibshirani_Friedman_2009}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Methods}{4}{section.2}\protected@file@percent }
+\newlabel{methods}{{2}{4}{Methods}{section.2}{}}
+\citation{krizhevsky_imagenet_2012}
+\citation{hochreiter_long_1997}
+\citation{radosavovic_designing_2020}
+\citation{krizhevsky_imagenet_2012}
+\citation{he_deep_2015}
+\citation{he_deep_2015}
+\citation{lin_network_2014}
+\citation{ba_layer_2016}
+\citation{fukushima_visual_1969}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces  \textbf  {Model diagram of our algorithm.} The model accepts a sequence of 9 10-second epochs to predict the class of the center 10-second epoch (epoch i, as denoted in the figure) Each 10-second epoch in the sequence is independently encoded and then forwarded to a Long Short-Term Memory (LSTM) neural network to share information between neighboring 10-second epochs. The 64-dimensional LSTM output vector is linearly projected down to three dimensions and mapped to a probability distribution over 3 values (corresponding to 3 vigilant states) by the Softmax function. }}{6}{figure.1}\protected@file@percent }
+\newlabel{model}{{1}{6}{\textbf {Model diagram of our algorithm.} The model accepts a sequence of 9 10-second epochs to predict the class of the center 10-second epoch (epoch i, as denoted in the figure) Each 10-second epoch in the sequence is independently encoded and then forwarded to a Long Short-Term Memory (LSTM) neural network to share information between neighboring 10-second epochs. The 64-dimensional LSTM output vector is linearly projected down to three dimensions and mapped to a probability distribution over 3 values (corresponding to 3 vigilant states) by the Softmax function}{figure.1}{}}
+\citation{kullback_information_1951}
+\citation{kingma_adam_2017}
+\citation{Goodfellow-et-al-2016}
+\citation{liu_attention-based_2022}
+\citation{miladinovic_spindle_2019}
+\citation{liu_attention-based_2022}
+\citation{miladinovic_spindle_2019}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Results}{9}{section.3}\protected@file@percent }
+\newlabel{results}{{3}{9}{Results}{section.3}{}}
+\citation{maaten_visualizing_2008}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces  \textbf  {Performance of the algorithm on our dataset created for the model training over 16 folds of cross-validation.}\hskip 1em\relax (A) Precision, recall, and f1-score over 16 folds of cross-validation are shown by a boxplot. (B) Dimensionality reduction of EEG encodings colored by sleep stage. Our network encodes EEG signals to be well-separated and therefore serves as the basis for accurate sleep staging. (C) Confusion matrix. The diagonal elements represent the percentage of 10-second epochs that were correctly classified by the algorithm (recall), whereas the off-diagonal elements show the percentage of 10-second epochs mislabeled by the algorithm. (D) Duration of each sleep stage for predicted signal and reference signal over 16 folds of cross-validation expressed as a proportion of the total duration of the given EEG recording. Pairs of boxplots are shown for each stage where the left box depicts the predicted distribution, and the right box depicts the reference distribution. P - paradoxical sleep, S - slow-wave sleep, W - wakefulness. }}{10}{figure.2}\protected@file@percent }
+\newlabel{ekyn_grid}{{2}{10}{\textbf {Performance of the algorithm on our dataset created for the model training over 16 folds of cross-validation.}\quad (A) Precision, recall, and f1-score over 16 folds of cross-validation are shown by a boxplot. (B) Dimensionality reduction of EEG encodings colored by sleep stage. Our network encodes EEG signals to be well-separated and therefore serves as the basis for accurate sleep staging. (C) Confusion matrix. The diagonal elements represent the percentage of 10-second epochs that were correctly classified by the algorithm (recall), whereas the off-diagonal elements show the percentage of 10-second epochs mislabeled by the algorithm. (D) Duration of each sleep stage for predicted signal and reference signal over 16 folds of cross-validation expressed as a proportion of the total duration of the given EEG recording. Pairs of boxplots are shown for each stage where the left box depicts the predicted distribution, and the right box depicts the reference distribution. P - paradoxical sleep, S - slow-wave sleep, W - wakefulness}{figure.2}{}}
+\citation{tezuka_real-time_2021}
+\citation{liu_attention-based_2022}
+\citation{liu_attention-based_2022}
+\citation{liu_attention-based_2022}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Performance of our model on our dataset broken down by class. Metrics are the mean and standard deviation over 16 folds of cross-validation for f1-score, recall, and precision.}}{11}{table.1}\protected@file@percent }
+\newlabel{kyna_table}{{1}{11}{Performance of our model on our dataset broken down by class. Metrics are the mean and standard deviation over 16 folds of cross-validation for f1-score, recall, and precision}{table.1}{}}
+\newlabel{architecture_table}{{3}{13}{SleepyRat Dataset}{section*.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces \textbf  {Results of SleepyRat dataset statistical analysis comparing LSTM scoring and human expert scoring.}\hskip 1em\relax P values are indicated for main effects of scoring, ZT, and interaction between scoring and ZT. * indicates significant effect wherein P $<$ 0.05. P values of two-way RM ANOVA.}}{13}{table.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces  \textbf  {Sleep-wake duration and architecture data do not significantly differ between LSTM and human expert scoring of SleepyRat dataset. }\hskip 1em\relax (A) NREM duration, (B) REM duration, (C) Wake duration, (D) NREM bout number, (E) REM bout number, (F) Wake bout number, (G) average NREM bout duration, (H) average REM bout duration, (I) average Wake bout duration. Two-way RM ANOVA with post-hoc Dunnett test. * P < 0.05, ** P < 0.01, *** P < 0.001, **** P < 0.0001. Data are mean $\pm $ SEM. N =14 per group. }}{14}{figure.3}\protected@file@percent }
+\newlabel{architecture}{{3}{14}{\textbf {Sleep-wake duration and architecture data do not significantly differ between LSTM and human expert scoring of SleepyRat dataset. }\quad (A) NREM duration, (B) REM duration, (C) Wake duration, (D) NREM bout number, (E) REM bout number, (F) Wake bout number, (G) average NREM bout duration, (H) average REM bout duration, (I) average Wake bout duration. Two-way RM ANOVA with post-hoc Dunnett test. * P < 0.05, ** P < 0.01, *** P < 0.001, **** P < 0.0001. Data are mean $\pm $ SEM. N =14 per group}{figure.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Discussion}{14}{section.4}\protected@file@percent }
+\newlabel{discussion}{{4}{14}{Discussion}{section.4}{}}
+\bibdata{sn-bibliography}
+\bibcite{cirelli_is_2008}{{1}{2008}{{Cirelli and Tononi}}{{}}}
+\bibcite{jahrami_sleep_2021}{{2}{2021}{{Jahrami et~al.}}{{}}}
+\bibcite{graves_sleep_2003}{{3}{2003}{{Graves et~al.}}{{}}}
+\bibcite{rentschler_reducing_2024}{{4}{2024}{{Rentschler et~al.}}{{}}}
+\bibcite{siegel_sleep_2022}{{5}{2022}{{Siegel}}{{}}}
+\bibcite{wright_stress_2023}{{6}{2023}{{Wright et~al.}}{{}}}
+\bibcite{rayan_sleep_2024}{{7}{2024}{{Rayan et~al.}}{{}}}
+\bibcite{rattenborg_evolution_2023}{{8}{2023}{{Rattenborg and Ungurean}}{{}}}
+\bibcite{miladinovic_spindle_2019}{{9}{2019}{{Miladinovic et~al.}}{{}}}
+\bibcite{kramer_evaluation_2003}{{10}{2003}{{Kramer and Kinter}}{{}}}
+\bibcite{papazoglou_non-restraining_2016}{{11}{2016}{{Papazoglou et~al.}}{{}}}
+\bibcite{rentschler_prenatal_2021}{{12}{2021}{{Rentschler et~al.}}{{}}}
+\bibcite{shannon_mathematical_1948}{{13}{1948}{{Shannon}}{{}}}
+\bibcite{jha_slumbernet_2024}{{14}{2024}{{Jha et~al.}}{{}}}
+\bibcite{vallat_open-source_2021}{{15}{2021}{{Vallat and Walker}}{{}}}
+\bibcite{smith_toward_2024}{{16}{2024}{{Smith et~al.}}{{}}}
+\bibcite{chien_maeeg_2022}{{17}{2022}{{Chien et~al.}}{{}}}
+\bibcite{vaswani_attention_2023}{{18}{2023}{{Vaswani et~al.}}{{}}}
+\bibcite{he_deep_2015}{{19}{2015}{{He et~al.}}{{}}}
+\bibcite{krizhevsky_imagenet_2012}{{20}{2012}{{Krizhevsky et~al.}}{{}}}
+\bibcite{supratak_deepsleepnet_2017}{{21}{2017}{{Supratak et~al.}}{{}}}
+\bibcite{perslev_u-time_2019}{{22}{2019}{{Perslev et~al.}}{{}}}
+\bibcite{Smith_Anand_Milosavljevic_Rentschler_Pocivavsek_Valafar_2022}{{23}{2022}{{Smith et~al.}}{{}}}
+\bibcite{gao_multiple_2016}{{24}{2016}{{Gao et~al.}}{{}}}
+\bibcite{gross_open-source_2009}{{25}{2009}{{Gross et~al.}}{{}}}
+\bibcite{stephenson_automated_2009}{{26}{2009}{{Stephenson et~al.}}{{}}}
+\bibcite{louis_design_2004}{{27}{2004}{{Louis et~al.}}{{}}}
+\bibcite{ellen_artificial_2021}{{28}{2021}{{Ellen and Dash}}{{}}}
+\bibcite{tezuka_real-time_2021}{{29}{2021}{{Tezuka et~al.}}{{}}}
+\bibcite{liu_attention-based_2022}{{30}{2022}{{Liu et~al.}}{{}}}
+\bibcite{milosavljevic_kynurenine_2023}{{31}{2023}{{Milosavljevic et~al.}}{{}}}
+\bibcite{Goodfellow-et-al-2016}{{32}{2016}{{Goodfellow et~al.}}{{}}}
+\bibcite{Hastie_Tibshirani_Friedman_2009}{{33}{2009}{{Hastie et~al.}}{{}}}
+\bibcite{hochreiter_long_1997}{{34}{1997}{{Hochreiter and Schmidhuber}}{{}}}
+\bibcite{radosavovic_designing_2020}{{35}{2020}{{Radosavovic et~al.}}{{}}}
+\bibcite{lin_network_2014}{{36}{2014}{{Lin et~al.}}{{}}}
+\bibcite{ba_layer_2016}{{37}{2016}{{Ba et~al.}}{{}}}
+\bibcite{fukushima_visual_1969}{{38}{1969}{{Fukushima}}{{}}}
+\bibcite{kullback_information_1951}{{39}{1951}{{Kullback and Leibler}}{{}}}
+\bibcite{kingma_adam_2017}{{40}{2017}{{Kingma and Ba}}{{}}}
+\bibcite{maaten_visualizing_2008}{{41}{2008}{{Maaten and Hinton}}{{}}}
+\gdef \@abspage@last{21}
